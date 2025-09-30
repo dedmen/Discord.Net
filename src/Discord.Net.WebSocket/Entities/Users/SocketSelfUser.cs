@@ -20,6 +20,22 @@ namespace Discord.WebSocket
         public bool IsMfaEnabled { get; private set; }
         internal override SocketGlobalUser GlobalUser { get; set; }
 
+        /// <summary>
+        ///     Gets the hash of the banner.
+        /// </summary>
+        /// <remarks>
+        ///     <see langword="null"/> if the user has no banner set.
+        /// </remarks>
+        public string BannerId { get; internal set; }
+
+        /// <summary>
+        ///     Gets the color of the banner.
+        /// </summary>
+        /// <remarks>
+        ///     <see langword="null"/> if the user has no banner set.
+        /// </remarks>
+        public Color? BannerColor { get; internal set; }
+
         /// <inheritdoc />
         public override bool IsBot { get { return GlobalUser.IsBot; } internal set { GlobalUser.IsBot = value; } }
         /// <inheritdoc />
@@ -28,6 +44,30 @@ namespace Discord.WebSocket
         public override ushort DiscriminatorValue { get { return GlobalUser.DiscriminatorValue; } internal set { GlobalUser.DiscriminatorValue = value; } }
         /// <inheritdoc />
         public override string AvatarId { get { return GlobalUser.AvatarId; } internal set { GlobalUser.AvatarId = value; } }
+        /// <inheritdoc />
+        public override string GlobalName { get { return GlobalUser.GlobalName; } internal set { GlobalUser.GlobalName = value; } }
+
+        /// <inheritdoc />
+        public override string AvatarDecorationHash
+        {
+            get => GlobalUser.AvatarDecorationHash;
+            internal set => GlobalUser.AvatarDecorationHash = value;
+        }
+
+        /// <inheritdoc />
+        public override ulong? AvatarDecorationSkuId
+        {
+            get => GlobalUser.AvatarDecorationSkuId;
+            internal set => GlobalUser.AvatarDecorationSkuId = value;
+        }
+
+        /// <inheritdoc />
+        public override PrimaryGuild? PrimaryGuild
+        {
+            get => GlobalUser.PrimaryGuild;
+            internal set => GlobalUser.PrimaryGuild = value;
+        }
+
         /// <inheritdoc />
         internal override SocketPresence Presence { get { return GlobalUser.Presence; } set { GlobalUser.Presence = value; } }
         /// <inheritdoc />
@@ -84,6 +124,18 @@ namespace Discord.WebSocket
                 Locale = model.Locale.Value;
                 hasGlobalChanges = true;
             }
+
+            if (model.BannerColor.IsSpecified && model.BannerColor.Value != BannerColor)
+            {
+                BannerColor = model.BannerColor.Value;
+                hasGlobalChanges = true;
+            }
+
+            if (model.Banner.IsSpecified && model.Banner.Value != BannerId)
+            {
+                BannerId = model.Banner.Value;
+                hasGlobalChanges = true;
+            }
             return hasGlobalChanges;
         }
 
@@ -91,7 +143,10 @@ namespace Discord.WebSocket
         public Task ModifyAsync(Action<SelfUserProperties> func, RequestOptions options = null)
             => UserHelper.ModifyAsync(this, Discord, func, options);
 
-        private string DebuggerDisplay => $"{Username}#{Discriminator} ({Id}{(IsBot ? ", Bot" : "")}, Self)";
+        private string DebuggerDisplay => DiscriminatorValue != 0
+            ? $"{Username}#{Discriminator} ({Id}{(IsBot ? ", Bot" : "")}, Self)"
+            : $"{Username} ({Id}{(IsBot ? ", Bot" : "")}, Self)";
+
         internal new SocketSelfUser Clone() => MemberwiseClone() as SocketSelfUser;
     }
 }

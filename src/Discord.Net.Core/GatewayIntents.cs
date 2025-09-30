@@ -48,13 +48,35 @@ namespace Discord
         ///     This intent includes GUILD_SCHEDULED_EVENT_CREATE, GUILD_SCHEDULED_EVENT_UPDATE, GUILD_SCHEDULED_EVENT_DELETE, GUILD_SCHEDULED_EVENT_USER_ADD, GUILD_SCHEDULED_EVENT_USER_REMOVE
         /// </summary>
         GuildScheduledEvents = 1 << 16,
+
         /// <summary>
-        ///     This intent includes all but <see cref="GuildMembers"/> and <see cref="GuildPresences"/>
+        ///     This intent includes AUTO_MODERATION_RULE_CREATE, AUTO_MODERATION_RULE_UPDATE, AUTO_MODERATION_RULE_DELETE
+        /// </summary>
+        AutoModerationConfiguration = 1 << 20,
+
+        /// <summary>
+        ///     This intent includes AUTO_MODERATION_ACTION_EXECUTION
+        /// </summary>
+        AutoModerationActionExecution = 1 << 21,
+
+        /// <summary>
+        ///     This intent includes MESSAGE_POLL_VOTE_ADD and MESSAGE_POLL_VOTE_REMOVE
+        /// </summary>
+        GuildMessagePolls = 1 << 24,
+
+        /// <summary>
+        ///     This intent includes MESSAGE_POLL_VOTE_ADD and MESSAGE_POLL_VOTE_REMOVE
+        /// </summary>
+        DirectMessagePolls = 1 << 25,
+
+        /// <summary>
+        ///     This intent includes all but <see cref="GuildMembers"/>, <see cref="GuildPresences"/> and <see cref="MessageContent"/>
         ///     which are privileged and must be enabled in the Developer Portal.
         /// </summary>
         AllUnprivileged = Guilds | GuildBans | GuildEmojis | GuildIntegrations | GuildWebhooks | GuildInvites |
             GuildVoiceStates | GuildMessages | GuildMessageReactions | GuildMessageTyping | DirectMessages |
-            DirectMessageReactions | DirectMessageTyping | GuildScheduledEvents,
+            DirectMessageReactions | DirectMessageTyping | GuildScheduledEvents | AutoModerationConfiguration |
+            AutoModerationActionExecution | GuildMessagePolls | DirectMessagePolls,
         /// <summary>
         ///     This intent includes all of them, including privileged ones.
         /// </summary>

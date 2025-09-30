@@ -110,9 +110,6 @@ namespace Discord.Net.WebSockets
         {
             _isDisconnecting = true;
 
-            try
-            { _disconnectTokenSource.Cancel(false); }
-            catch { }
 
             if (_client != null)
             {
@@ -120,11 +117,22 @@ namespace Discord.Net.WebSockets
                 {
                     var status = (WebSocketCloseStatus)closeCode;
                     try
-                    { await _client.CloseOutputAsync(status, "", new CancellationToken()); }
+                    {
+                        await _client.CloseOutputAsync(status, "", new CancellationToken());
+                    }
                     catch { }
                 }
+
                 try
-                { _client.Dispose(); }
+                {
+                    _client.Dispose();
+                }
+                catch { }
+
+                try
+                {
+                    _disconnectTokenSource.Cancel(false);
+                }
                 catch { }
 
                 _client = null;
@@ -132,7 +140,7 @@ namespace Discord.Net.WebSockets
 
             try
             {
-                await (_task ?? Task.Delay(0)).ConfigureAwait(false);
+                await (_task ?? Task.CompletedTask).ConfigureAwait(false);
                 _task = null;
             }
             finally { _isDisconnecting = false; }
@@ -259,7 +267,7 @@ namespace Discord.Net.WebSockets
             }
             catch (Win32Exception ex) when (ex.HResult == HR_TIMEOUT)
             {
-                var _ = OnClosed(new Exception("Connection timed out.", ex));
+                var _ = OnClosed(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, "Connection timed out.", ex));
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)

@@ -6,7 +6,7 @@ namespace Discord.API.Rest
     internal class CreateMessageParams
     {
         [JsonProperty("content")]
-        public string Content { get; }
+        public Optional<string> Content { get; set; }
 
         [JsonProperty("nonce")]
         public Optional<string> Nonce { get; set; }
@@ -24,7 +24,7 @@ namespace Discord.API.Rest
         public Optional<MessageReference> MessageReference { get; set; }
 
         [JsonProperty("components")]
-        public Optional<API.ActionRowComponent[]> Components { get; set; }
+        public Optional<IMessageComponent[]> Components { get; set; }
 
         [JsonProperty("sticker_ids")]
         public Optional<ulong[]> Stickers { get; set; }
@@ -32,9 +32,7 @@ namespace Discord.API.Rest
         [JsonProperty("flags")]
         public Optional<MessageFlags> Flags { get; set; }
 
-        public CreateMessageParams(string content)
-        {
-            Content = content;
-        }
+        [JsonProperty("poll")]
+        public Optional<CreatePollParams> Poll { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using Discord.API.Rest;
 using Newtonsoft.Json;
 
 namespace Discord.API
@@ -20,7 +21,7 @@ namespace Discord.API
         public Optional<MessageFlags> Flags { get; set; }
 
         [JsonProperty("components")]
-        public Optional<ActionRowComponent[]> Components { get; set; }
+        public Optional<IMessageComponent[]> Components { get; set; }
 
         [JsonProperty("choices")]
         public Optional<ApplicationCommandOptionChoice[]> Choices { get; set; }
@@ -30,5 +31,8 @@ namespace Discord.API
 
         [JsonProperty("custom_id")]
         public Optional<string> CustomId { get; set; }
+
+        [JsonProperty("poll")]
+        public Optional<CreatePollParams> Poll { get; set; }
     }
 }

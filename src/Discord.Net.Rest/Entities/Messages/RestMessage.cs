@@ -93,8 +93,14 @@ namespace Discord.Rest
         /// <inheritdoc />
         public MessageRoleSubscriptionData RoleSubscriptionData { get; private set; }
 
+        /// <inheritdoc />
+        public PurchaseNotification PurchaseNotification { get; private set; }
+
+        /// <inheritdoc />
+        public MessageCallData? CallData { get; private set; }
+
         /// <inheritdoc cref="IMessage.Components"/>
-        public IReadOnlyCollection<ActionRowComponent> Components { get; private set; }
+        public IReadOnlyCollection<IMessageComponent> Components { get; private set; }
         /// <summary>
         ///     Gets a collection of the mentioned users in the message.
         /// </summary>
@@ -112,6 +118,7 @@ namespace Discord.Rest
             if (model.Type == MessageType.Default ||
                 model.Type == MessageType.Reply ||
                 model.Type == MessageType.ApplicationCommand ||
+                model.Type == MessageType.ContextMenuCommand ||
                 model.Type == MessageType.ThreadStarterMessage)
                 return RestUserMessage.Create(discord, channel, author, model);
             else
@@ -143,7 +150,7 @@ namespace Discord.Rest
             if (model.Activity.IsSpecified)
             {
                 // create a new Activity from the API model
-                Activity = new MessageActivity()
+                Activity = new MessageActivity
                 {
                     Type = model.Activity.Value.Type.Value,
                     PartyId = model.Activity.Value.PartyId.GetValueOrDefault()
@@ -158,61 +165,14 @@ namespace Discord.Rest
                     GuildId = model.Reference.Value.GuildId,
                     InternalChannelId = model.Reference.Value.ChannelId,
                     MessageId = model.Reference.Value.MessageId,
-                    FailIfNotExists = model.Reference.Value.FailIfNotExists
+                    FailIfNotExists = model.Reference.Value.FailIfNotExists,
+                    ReferenceType = model.Reference.Value.Type
                 };
             }
 
-            if (model.Components.IsSpecified)
-            {
-                Components = model.Components.Value.Select(x => new ActionRowComponent(x.Components.Select<IMessageComponent, IMessageComponent>(y =>
-                {
-                    switch (y.Type)
-                    {
-                        case ComponentType.Button:
-                            {
-                                var parsed = (API.ButtonComponent)y;
-                                return new Discord.ButtonComponent(
-                                    parsed.Style,
-                                    parsed.Label.GetValueOrDefault(),
-                                    parsed.Emote.IsSpecified
-                                        ? parsed.Emote.Value.Id.HasValue
-                                            ? new Emote(parsed.Emote.Value.Id.Value, parsed.Emote.Value.Name, parsed.Emote.Value.Animated.GetValueOrDefault())
-                                            : new Emoji(parsed.Emote.Value.Name)
-                                        : null,
-                                    parsed.CustomId.GetValueOrDefault(),
-                                    parsed.Url.GetValueOrDefault(),
-                                    parsed.Disabled.GetValueOrDefault());
-                            }
-                        case ComponentType.SelectMenu or ComponentType.ChannelSelect or ComponentType.RoleSelect or ComponentType.MentionableSelect or ComponentType.UserSelect:
-                            {
-                                var parsed = (API.SelectMenuComponent)y;
-                                return new SelectMenuComponent(
-                                    parsed.CustomId,
-                                    parsed.Options?.Select(z => new SelectMenuOption(
-                                        z.Label,
-                                        z.Value,
-                                        z.Description.GetValueOrDefault(),
-                                        z.Emoji.IsSpecified
-                                            ? z.Emoji.Value.Id.HasValue
-                                                ? new Emote(z.Emoji.Value.Id.Value, z.Emoji.Value.Name, z.Emoji.Value.Animated.GetValueOrDefault())
-                                                : new Emoji(z.Emoji.Value.Name)
-                                            : null,
-                                        z.Default.ToNullable())).ToList(),
-                                    parsed.Placeholder.GetValueOrDefault(),
-                                    parsed.MinValues,
-                                    parsed.MaxValues,
-                                    parsed.Disabled,
-                                    parsed.Type,
-                                    parsed.ChannelTypes.GetValueOrDefault()
-                                );
-                            }
-                        default:
-                            return null;
-                    }
-                }).ToList())).ToImmutableArray();
-            }
-            else
-                Components = new List<ActionRowComponent>();
+            Components = model.Components.IsSpecified
+                ? model.Components.Value.Select(x => x.ToEntity()).ToImmutableArray()
+                : [];
 
             if (model.Flags.IsSpecified)
                 Flags = model.Flags.Value;
@@ -223,15 +183,16 @@ namespace Discord.Rest
                 if (value.Length > 0)
                 {
                     var reactions = ImmutableArray.CreateBuilder<RestReaction>(value.Length);
-                    for (int i = 0; i < value.Length; i++)
-                        reactions.Add(RestReaction.Create(value[i]));
+                    foreach (var t in value)
+                        reactions.Add(RestReaction.Create(t));
+
                     _reactions = reactions.ToImmutable();
                 }
                 else
-                    _reactions = ImmutableArray.Create<RestReaction>();
+                    _reactions = [];
             }
             else
-                _reactions = ImmutableArray.Create<RestReaction>();
+                _reactions = [];
 
             if (model.Interaction.IsSpecified)
             {
@@ -268,7 +229,19 @@ namespace Discord.Rest
 
             if (model.Thread.IsSpecified)
                 Thread = RestThreadChannel.Create(Discord, new RestGuild(Discord, model.Thread.Value.GuildId.Value), model.Thread.Value);
+
+            if (model.PurchaseNotification.IsSpecified)
+            {
+                PurchaseNotification = new PurchaseNotification(model.PurchaseNotification.Value.Type,
+                    model.PurchaseNotification.Value.ProductPurchase.IsSpecified
+                        ? new GuildProductPurchase(model.PurchaseNotification.Value.ProductPurchase.Value.ListingId, model.PurchaseNotification.Value.ProductPurchase.Value.ProductName)
+                        : null);
+            }
+
+            if (model.Call.IsSpecified)
+                CallData = new MessageCallData(model.Call.Value.Participants, model.Call.Value.EndedTimestamp.ToNullable());
         }
+
         /// <inheritdoc />
         public async Task UpdateAsync(RequestOptions options = null)
         {
@@ -305,6 +278,7 @@ namespace Discord.Rest
         IReadOnlyCollection<IMessageComponent> IMessage.Components => Components;
 
         /// <inheritdoc/>
+        [Obsolete("This property will be deprecated soon. Use IUserMessage.InteractionMetadata instead.")]
         IMessageInteraction IMessage.Interaction => Interaction;
 
         /// <inheritdoc />
@@ -313,7 +287,14 @@ namespace Discord.Rest
         #endregion
 
         /// <inheritdoc />
-        public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions => _reactions.ToDictionary(x => x.Emote, x => new ReactionMetadata { ReactionCount = x.Count, IsMe = x.Me });
+        public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions => _reactions.ToDictionary(x => x.Emote, x => new ReactionMetadata
+        {
+            ReactionCount = x.Count,
+            IsMe = x.Me,
+            BurstColors = x.BurstColors,
+            BurstCount = x.BurstCount,
+            NormalCount = x.NormalCount,
+        });
 
         /// <inheritdoc />
         public Task AddReactionAsync(IEmote emote, RequestOptions options = null)
@@ -331,7 +312,7 @@ namespace Discord.Rest
         public Task RemoveAllReactionsForEmoteAsync(IEmote emote, RequestOptions options = null)
             => MessageHelper.RemoveAllReactionsForEmoteAsync(this, emote, Discord, options);
         /// <inheritdoc />
-        public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetReactionUsersAsync(IEmote emote, int limit, RequestOptions options = null)
-            => MessageHelper.GetReactionUsersAsync(this, emote, limit, Discord, options);
+        public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetReactionUsersAsync(IEmote emote, int limit, RequestOptions options = null, ReactionType type = ReactionType.Normal)
+            => MessageHelper.GetReactionUsersAsync(this, emote, limit, Discord, type, options);
     }
 }

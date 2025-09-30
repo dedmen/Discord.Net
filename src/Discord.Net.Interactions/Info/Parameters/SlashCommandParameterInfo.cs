@@ -34,7 +34,7 @@ namespace Discord.Interactions
         public double? MinValue { get; }
 
         /// <summary>
-        ///     Gets the maxmimum value permitted for a number type parameter.
+        ///     Gets the maximum value permitted for a number type parameter.
         /// </summary>
         public double? MaxValue { get; }
 
@@ -49,13 +49,13 @@ namespace Discord.Interactions
         public int? MaxLength { get; }
 
         /// <summary>
-        ///     Gets the <see cref="TypeConverter{T}"/> that will be used to convert the incoming <see cref="Discord.WebSocket.SocketSlashCommandDataOption"/> into
+        ///     Gets the <see cref="TypeConverter{T}"/> that will be used to convert the incoming <see cref="Discord.IDiscordInteractionData"/> into
         ///     <see cref="CommandParameterInfo.ParameterType"/>.
         /// </summary>
         public TypeConverter TypeConverter { get; }
 
         /// <summary>
-        ///     Gets the <see cref="IAutocompleteHandler"/> thats linked to this parameter.
+        ///     Gets the <see cref="IAutocompleteHandler"/> that's linked to this parameter.
         /// </summary>
         public IAutocompleteHandler AutocompleteHandler { get; }
 

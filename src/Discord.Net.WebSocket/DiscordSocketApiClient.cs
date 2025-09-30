@@ -281,14 +281,16 @@ namespace Discord.API
                 return;
             ConnectionState = ConnectionState.Disconnecting;
 
-            try
-            { _connectCancelToken?.Cancel(false); }
-            catch { }
-
             if (ex is GatewayReconnectException)
                 await WebSocketClient.DisconnectAsync(4000).ConfigureAwait(false);
             else
                 await WebSocketClient.DisconnectAsync().ConfigureAwait(false);
+
+            try
+            {
+                _connectCancelToken?.Cancel(false);
+            }
+            catch { }
 
             ConnectionState = ConnectionState.Disconnected;
         }
@@ -317,7 +319,7 @@ namespace Discord.API
 #endif
         }
 
-        public async Task SendIdentifyAsync(int largeThreshold = 100, int shardID = 0, int totalShards = 1, GatewayIntents gatewayIntents = GatewayIntents.AllUnprivileged, (UserStatus, bool, long?, GameModel)? presence = null, RequestOptions options = null)
+        public Task SendIdentifyAsync(int largeThreshold = 100, int shardID = 0, int totalShards = 1, GatewayIntents gatewayIntents = GatewayIntents.AllUnprivileged, (UserStatus, bool, long?, GameModel)? presence = null, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
             var props = new Dictionary<string, string>
@@ -350,9 +352,10 @@ namespace Discord.API
                 };
             }
 
-            await SendGatewayAsync(GatewayOpCode.Identify, msg, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.Identify, msg, options: options);
         }
-        public async Task SendResumeAsync(string sessionId, int lastSeq, RequestOptions options = null)
+
+        public Task SendResumeAsync(string sessionId, int lastSeq, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
             var msg = new ResumeParams()
@@ -361,14 +364,16 @@ namespace Discord.API
                 SessionId = sessionId,
                 Sequence = lastSeq
             };
-            await SendGatewayAsync(GatewayOpCode.Resume, msg, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.Resume, msg, options: options);
         }
-        public async Task SendHeartbeatAsync(int lastSeq, RequestOptions options = null)
+
+        public Task SendHeartbeatAsync(int lastSeq, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
-            await SendGatewayAsync(GatewayOpCode.Heartbeat, lastSeq, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.Heartbeat, lastSeq, options: options);
         }
-        public async Task SendPresenceUpdateAsync(UserStatus status, bool isAFK, long? since, GameModel game, RequestOptions options = null)
+
+        public Task SendPresenceUpdateAsync(UserStatus status, bool isAFK, long? since, GameModel game, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
             var args = new PresenceUpdateParams
@@ -379,7 +384,7 @@ namespace Discord.API
                 Activities = new object[] { game }
             };
             options.BucketId = GatewayBucket.Get(GatewayBucketType.PresenceUpdate).Id;
-            await SendGatewayAsync(GatewayOpCode.PresenceUpdate, args, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.PresenceUpdate, args, options: options);
         }
         public async Task TrackGuildEventsAsync(IGuild guild)
         {
@@ -398,12 +403,13 @@ namespace Discord.API
             param.Channels.Add(channels.ElementAt(0).Id, [[0, 99]]);
             await SendGatewayAsync(GatewayOpCode.LazyGuild, param, new RequestOptions());
         }
-        public async Task SendRequestMembersAsync(IEnumerable<ulong> guildIds, RequestOptions options = null)
+        public Task SendRequestMembersAsync(IEnumerable<ulong> guildIds, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
-            await SendGatewayAsync(GatewayOpCode.RequestGuildMembers, new RequestMembersParams { GuildIds = guildIds, Query = "", Limit = 0 }, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.RequestGuildMembers, new RequestMembersParams { GuildIds = guildIds, Query = "", Limit = 0 }, options: options);
         }
-        public async Task SendVoiceStateUpdateAsync(ulong guildId, ulong? channelId, bool selfDeaf, bool selfMute, RequestOptions options = null)
+
+        public Task SendVoiceStateUpdateAsync(ulong guildId, ulong? channelId, bool selfDeaf, bool selfMute, RequestOptions options = null)
         {
             var payload = new VoiceStateUpdateParams
             {
@@ -413,17 +419,19 @@ namespace Discord.API
                 SelfMute = selfMute
             };
             options = RequestOptions.CreateOrClone(options);
-            await SendGatewayAsync(GatewayOpCode.VoiceStateUpdate, payload, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.VoiceStateUpdate, payload, options: options);
         }
-        public async Task SendVoiceStateUpdateAsync(VoiceStateUpdateParams payload, RequestOptions options = null)
+
+        public Task SendVoiceStateUpdateAsync(VoiceStateUpdateParams payload, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
-            await SendGatewayAsync(GatewayOpCode.VoiceStateUpdate, payload, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.VoiceStateUpdate, payload, options: options);
         }
-        public async Task SendGuildSyncAsync(IEnumerable<ulong> guildIds, RequestOptions options = null)
+
+        public Task SendGuildSyncAsync(IEnumerable<ulong> guildIds, RequestOptions options = null)
         {
             options = RequestOptions.CreateOrClone(options);
-            await SendGatewayAsync(GatewayOpCode.GuildSync, guildIds, options: options).ConfigureAwait(false);
+            return SendGatewayAsync(GatewayOpCode.GuildSync, guildIds, options: options);
         }
         #endregion
     }

@@ -3,6 +3,7 @@ using Discord.Net.Rest;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Discord.API.Rest
@@ -37,15 +38,25 @@ namespace Discord.API.Rest
         public Optional<MessageFlags> Flags { get; set; }
 
         [JsonProperty("components")]
-        public Optional<API.ActionRowComponent[]> Components { get; set; }
+        public Optional<IMessageComponent[]> Components { get; set; }
 
         [JsonProperty("file")]
         public Optional<MultipartFile> File { get; set; }
+
+        [JsonProperty("thread_name")]
+        public Optional<string> ThreadName { get; set; }
+
+        [JsonProperty("applied_tags")]
+        public Optional<ulong[]> AppliedTags { get; set; }
+
+        [JsonProperty("poll")]
+        public Optional<CreatePollParams> Poll { get; set; }
 
         public IReadOnlyDictionary<string, object> ToDictionary()
         {
             var d = new Dictionary<string, object>();
 
+            var extraFlags = MessageFlags.None;
             if (File.IsSpecified)
             {
                 d["file"] = File.Value;
@@ -68,8 +79,24 @@ namespace Discord.API.Rest
                 payload["embeds"] = Embeds.Value;
             if (AllowedMentions.IsSpecified)
                 payload["allowed_mentions"] = AllowedMentions.Value;
+
+
             if (Components.IsSpecified)
+            {
                 payload["components"] = Components.Value;
+                if (Components.Value.Any(x => x.Type is not ComponentType.ActionRow))
+                    extraFlags |= MessageFlags.ComponentsV2;
+            }
+
+            payload["flags"] = Flags.GetValueOrDefault(MessageFlags.None) | extraFlags;
+
+            if (ThreadName.IsSpecified)
+                payload["thread_name"] = ThreadName.Value;
+            if (AppliedTags.IsSpecified)
+                payload["applied_tags"] = AppliedTags.Value;
+            if (Poll.IsSpecified)
+                payload["poll"] = Poll.Value;
+
 
             var json = new StringBuilder();
             using (var text = new StringWriter(json))

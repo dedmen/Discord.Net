@@ -9,6 +9,11 @@ namespace Discord
     public interface IChannel : ISnowflakeEntity
     {
         /// <summary>
+        ///     Get the type of this channel.
+        /// </summary>
+        ChannelType ChannelType { get; }
+
+        /// <summary>
         ///     Gets the name of this channel.
         /// </summary>
         /// <returns>
@@ -46,7 +51,7 @@ namespace Discord
         /// <param name="options">The options to be used when sending the request.</param>
         /// <returns>
         ///     A task that represents the asynchronous get operation. The task result contains a user object that
-        ///     represents the found user; <c>null</c> if none is found.
+        ///     represents the found user; <see langword="null" /> if none is found.
         /// </returns>
         Task<IUser> GetUserAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null);
     }

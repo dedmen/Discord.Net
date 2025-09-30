@@ -14,7 +14,7 @@ namespace Discord
         ///     Gets a value that indicates whether the channel is NSFW.
         /// </summary>
         /// <returns>
-        ///     <c>true</c> if the channel has the NSFW flag enabled; otherwise <c>false</c>.
+        ///     <see langword="true" /> if the channel has the NSFW flag enabled; otherwise <see langword="false" />.
         /// </returns>
         bool IsNsfw { get; }
 
@@ -22,7 +22,7 @@ namespace Discord
         ///     Gets the current topic for this text channel.
         /// </summary>
         /// <returns>
-        ///     A string representing the topic set in the channel; <c>null</c> if none is set.
+        ///     A string representing the topic set in the channel; <see langword="null" /> if none is set.
         /// </returns>
         string Topic { get; }
 
@@ -34,6 +34,15 @@ namespace Discord
         ///     message; <c>0</c> if disabled.
         /// </returns>
         int SlowModeInterval { get; }
+
+        /// <summary>
+        /// Gets the current default slow-mode delay for threads in this channel.
+        /// </summary>
+        /// <returns>
+        ///     An <see cref="int"/> representing the time in seconds required before the user can send another
+        ///     message; <c>0</c> if disabled.
+        /// </returns>
+        int DefaultSlowModeInterval { get; }
 
         /// <summary>
         ///     Gets the default auto-archive duration for client-created threads in this channel.

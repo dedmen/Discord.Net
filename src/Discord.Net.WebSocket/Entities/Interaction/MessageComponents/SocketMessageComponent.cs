@@ -1,3 +1,4 @@
+using Discord.API.Rest;
 using Discord.Net.Rest;
 using Discord.Rest;
 using System;
@@ -19,10 +20,8 @@ namespace Discord.WebSocket
         ///     Gets the data received with this interaction, contains the button that was clicked.
         /// </summary>
         public new SocketMessageComponentData Data { get; }
-
-        /// <summary>
-        ///     Gets the message that contained the trigger for this interaction.
-        /// </summary>
+        
+        /// <inheritdoc cref="IComponentInteraction.Message"/>
         public SocketUserMessage Message { get; private set; }
 
         private object _lock = new object();
@@ -82,21 +81,24 @@ namespace Discord.WebSocket
             AllowedMentions allowedMentions = null,
             MessageComponent components = null,
             Embed embed = null,
-            RequestOptions options = null)
+            RequestOptions options = null,
+            PollProperties poll = null,
+            MessageFlags flags = MessageFlags.None)
         {
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot respond to an interaction after {InteractionHelper.ResponseTimeLimit} seconds!");
 
-            embeds ??= Array.Empty<Embed>();
+            embeds ??= [];
             if (embed != null)
                 embeds = new[] { embed }.Concat(embeds).ToArray();
 
             Preconditions.AtMost(allowedMentions?.RoleIds?.Count ?? 0, 100, nameof(allowedMentions.RoleIds), "A max of 100 role Ids are allowed.");
             Preconditions.AtMost(allowedMentions?.UserIds?.Count ?? 0, 100, nameof(allowedMentions.UserIds), "A max of 100 user Ids are allowed.");
             Preconditions.AtMost(embeds.Length, 10, nameof(embeds), "A max of 10 embeds are allowed.");
+            Preconditions.ValidatePoll(poll);
 
             // check that user flag and user Id list are exclusive, same with role flag and role Id list
             if (allowedMentions != null && allowedMentions.AllowedTypes.HasValue)
@@ -114,6 +116,13 @@ namespace Discord.WebSocket
                 }
             }
 
+            if (components?.Components?.Any(x => x.Type != ComponentType.ActionRow) ?? false)
+                flags |= MessageFlags.ComponentsV2;
+            if (ephemeral)
+                flags |= MessageFlags.Ephemeral;
+
+            Preconditions.ValidateMessageFlags(flags);
+
             var response = new API.Rest.UploadInteractionFileParams(attachments?.ToArray())
             {
                 Type = InteractionResponseType.ChannelMessageWithSource,
@@ -121,8 +130,9 @@ namespace Discord.WebSocket
                 AllowedMentions = allowedMentions != null ? allowedMentions?.ToModel() : Optional<API.AllowedMentions>.Unspecified,
                 Embeds = embeds.Any() ? embeds.Select(x => x.ToModel()).ToArray() : Optional<API.Embed[]>.Unspecified,
                 IsTTS = isTTS,
-                MessageComponents = components?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Optional<API.ActionRowComponent[]>.Unspecified,
-                Flags = ephemeral ? MessageFlags.Ephemeral : Optional<MessageFlags>.Unspecified
+                MessageComponents = components?.Components.Select(x => x.ToModel()).ToArray() ?? Optional<IMessageComponent[]>.Unspecified,
+                Flags = flags,
+                Poll = poll?.ToModel() ?? Optional<CreatePollParams>.Unspecified
             };
 
             lock (_lock)
@@ -146,37 +156,47 @@ namespace Discord.WebSocket
             AllowedMentions allowedMentions = null,
             MessageComponent components = null,
             Embed embed = null,
-            RequestOptions options = null)
+            RequestOptions options = null,
+            PollProperties poll = null,
+            MessageFlags flags = MessageFlags.None)
         {
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot respond to an interaction after {InteractionHelper.ResponseTimeLimit} seconds!");
 
-            embeds ??= Array.Empty<Embed>();
+            embeds ??= [];
             if (embed != null)
                 embeds = new[] { embed }.Concat(embeds).ToArray();
 
             Preconditions.AtMost(allowedMentions?.RoleIds?.Count ?? 0, 100, nameof(allowedMentions.RoleIds), "A max of 100 role Ids are allowed.");
             Preconditions.AtMost(allowedMentions?.UserIds?.Count ?? 0, 100, nameof(allowedMentions.UserIds), "A max of 100 user Ids are allowed.");
             Preconditions.AtMost(embeds.Length, 10, nameof(embeds), "A max of 10 embeds are allowed.");
+            Preconditions.ValidatePoll(poll);
 
             // check that user flag and user Id list are exclusive, same with role flag and role Id list
-            if (allowedMentions != null && allowedMentions.AllowedTypes.HasValue)
+            if (allowedMentions is { AllowedTypes: not null })
             {
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Users) &&
-                    allowedMentions.UserIds != null && allowedMentions.UserIds.Count > 0)
+                    allowedMentions.UserIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Users flag is mutually exclusive with the list of User Ids.", nameof(allowedMentions));
                 }
 
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Roles) &&
-                    allowedMentions.RoleIds != null && allowedMentions.RoleIds.Count > 0)
+                    allowedMentions.RoleIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Roles flag is mutually exclusive with the list of Role Ids.", nameof(allowedMentions));
                 }
             }
+
+            if (components?.Components?.Any(x => x.Type != ComponentType.ActionRow) ?? false)
+                flags |= MessageFlags.ComponentsV2;
+            if (ephemeral)
+                flags |= MessageFlags.Ephemeral;
+
+            Preconditions.ValidateMessageFlags(flags);
 
             var response = new API.InteractionResponse
             {
@@ -187,8 +207,9 @@ namespace Discord.WebSocket
                     AllowedMentions = allowedMentions?.ToModel(),
                     Embeds = embeds.Select(x => x.ToModel()).ToArray(),
                     TTS = isTTS,
-                    Flags = ephemeral ? MessageFlags.Ephemeral : Optional<MessageFlags>.Unspecified,
-                    Components = components?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Optional<API.ActionRowComponent[]>.Unspecified
+                    Flags = flags,
+                    Components = components?.Components.Select(x => x.ToModel()).ToArray() ?? Optional<IMessageComponent[]>.Unspecified,
+                    Poll = poll?.ToModel() ?? Optional<CreatePollParams>.Unspecified
                 }
             };
 
@@ -213,7 +234,7 @@ namespace Discord.WebSocket
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot respond to an interaction after {InteractionHelper.ResponseTimeLimit} seconds!");
 
             if (args.AllowedMentions.IsSpecified)
@@ -225,16 +246,6 @@ namespace Discord.WebSocket
 
             var embed = args.Embed;
             var embeds = args.Embeds;
-
-            bool hasText = args.Content.IsSpecified ? !string.IsNullOrEmpty(args.Content.Value) : !string.IsNullOrEmpty(Message.Content);
-            bool hasEmbeds = embed.IsSpecified && embed.Value != null || embeds.IsSpecified && embeds.Value?.Length > 0 || Message.Embeds.Any();
-            bool hasComponents = args.Components.IsSpecified && args.Components.Value != null;
-            bool hasAttachments = args.Attachments.IsSpecified;
-            bool hasFlags = args.Flags.IsSpecified;
-
-            // No content needed if modifying flags
-            if ((!hasComponents && !hasText && !hasEmbeds && !hasAttachments) && !hasFlags)
-                Preconditions.NotNullOrEmpty(args.Content.IsSpecified ? args.Content.Value : string.Empty, nameof(args.Content));
 
             var apiEmbeds = embed.IsSpecified || embeds.IsSpecified ? new List<API.Embed>() : null;
 
@@ -255,13 +266,13 @@ namespace Discord.WebSocket
             {
                 var allowedMentions = args.AllowedMentions.Value;
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Users)
-                && allowedMentions.UserIds != null && allowedMentions.UserIds.Count > 0)
+                    && allowedMentions.UserIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Users flag is mutually exclusive with the list of User Ids.", nameof(args.AllowedMentions));
                 }
 
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Roles)
-                && allowedMentions.RoleIds != null && allowedMentions.RoleIds.Count > 0)
+                    && allowedMentions.RoleIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Roles flag is mutually exclusive with the list of Role Ids.", nameof(args.AllowedMentions));
                 }
@@ -278,8 +289,8 @@ namespace Discord.WebSocket
                         AllowedMentions = args.AllowedMentions.IsSpecified ? args.AllowedMentions.Value?.ToModel() : Optional<API.AllowedMentions>.Unspecified,
                         Embeds = apiEmbeds?.ToArray() ?? Optional<API.Embed[]>.Unspecified,
                         Components = args.Components.IsSpecified
-                            ? args.Components.Value?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Array.Empty<API.ActionRowComponent>()
-                            : Optional<API.ActionRowComponent[]>.Unspecified,
+                            ? args.Components.Value?.Components.Select(x => x.ToModel()).ToArray() ?? []
+                            : Optional<IMessageComponent[]>.Unspecified,
                         Flags = args.Flags.IsSpecified ? args.Flags.Value ?? Optional<MessageFlags>.Unspecified : Optional<MessageFlags>.Unspecified
                     }
                 };
@@ -288,15 +299,17 @@ namespace Discord.WebSocket
             }
             else
             {
-                var response = new API.Rest.UploadInteractionFileParams(args.Attachments.Value.ToArray())
+                var attachments = args.Attachments.Value?.ToArray() ?? [];
+
+                var response = new API.Rest.UploadInteractionFileParams(attachments)
                 {
                     Type = InteractionResponseType.UpdateMessage,
                     Content = args.Content,
                     AllowedMentions = args.AllowedMentions.IsSpecified ? args.AllowedMentions.Value?.ToModel() : Optional<API.AllowedMentions>.Unspecified,
                     Embeds = apiEmbeds?.ToArray() ?? Optional<API.Embed[]>.Unspecified,
                     MessageComponents = args.Components.IsSpecified
-                        ? args.Components.Value?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Array.Empty<API.ActionRowComponent>()
-                        : Optional<API.ActionRowComponent[]>.Unspecified,
+                        ? args.Components.Value?.Components.Select(x => x.ToModel()).ToArray() ?? []
+                        : Optional<IMessageComponent[]>.Unspecified,
                     Flags = args.Flags.IsSpecified ? args.Flags.Value ?? Optional<MessageFlags>.Unspecified : Optional<MessageFlags>.Unspecified
                 };
 
@@ -315,7 +328,7 @@ namespace Discord.WebSocket
         }
 
         /// <inheritdoc/>
-        public override async Task<RestFollowupMessage> FollowupAsync(
+        public override Task<RestFollowupMessage> FollowupAsync(
             string text = null,
             Embed[] embeds = null,
             bool isTTS = false,
@@ -323,18 +336,29 @@ namespace Discord.WebSocket
             AllowedMentions allowedMentions = null,
             MessageComponent components = null,
             Embed embed = null,
-            RequestOptions options = null)
+            RequestOptions options = null,
+            PollProperties poll = null,
+            MessageFlags flags = MessageFlags.None)
         {
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            embeds ??= Array.Empty<Embed>();
+            embeds ??= [];
             if (embed != null)
                 embeds = new[] { embed }.Concat(embeds).ToArray();
 
             Preconditions.AtMost(allowedMentions?.RoleIds?.Count ?? 0, 100, nameof(allowedMentions.RoleIds), "A max of 100 role Ids are allowed.");
             Preconditions.AtMost(allowedMentions?.UserIds?.Count ?? 0, 100, nameof(allowedMentions.UserIds), "A max of 100 user Ids are allowed.");
             Preconditions.AtMost(embeds.Length, 10, nameof(embeds), "A max of 10 embeds are allowed.");
+            Preconditions.ValidatePoll(poll);
+
+            if (components?.Components?.Any(x => x.Type != ComponentType.ActionRow) ?? false)
+                flags |= MessageFlags.ComponentsV2;
+            if (ephemeral)
+                flags |= MessageFlags.Ephemeral;
+
+            Preconditions.ValidateMessageFlags(flags);
+                
 
             var args = new API.Rest.CreateWebhookMessageParams
             {
@@ -342,17 +366,16 @@ namespace Discord.WebSocket
                 AllowedMentions = allowedMentions?.ToModel() ?? Optional<API.AllowedMentions>.Unspecified,
                 IsTTS = isTTS,
                 Embeds = embeds.Select(x => x.ToModel()).ToArray(),
-                Components = components?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Optional<API.ActionRowComponent[]>.Unspecified
+                Components = components?.Components.Select(x => x.ToModel()).ToArray() ?? Optional<IMessageComponent[]>.Unspecified,
+                Poll = poll?.ToModel() ?? Optional<CreatePollParams>.Unspecified,
+                Flags = flags,
             };
 
-            if (ephemeral)
-                args.Flags = MessageFlags.Ephemeral;
-
-            return await InteractionHelper.SendFollowupAsync(Discord.Rest, args, Token, Channel, options);
+            return InteractionHelper.SendFollowupAsync(Discord.Rest, args, Token, Channel, options);
         }
 
         /// <inheritdoc/>
-        public override async Task<RestFollowupMessage> FollowupWithFilesAsync(
+        public override Task<RestFollowupMessage> FollowupWithFilesAsync(
             IEnumerable<FileAttachment> attachments,
             string text = null,
             Embed[] embeds = null,
@@ -361,18 +384,21 @@ namespace Discord.WebSocket
             AllowedMentions allowedMentions = null,
             MessageComponent components = null,
             Embed embed = null,
-            RequestOptions options = null)
+            RequestOptions options = null,
+            PollProperties poll = null,
+            MessageFlags flags = MessageFlags.None)
         {
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            embeds ??= Array.Empty<Embed>();
+            embeds ??= [];
             if (embed != null)
                 embeds = new[] { embed }.Concat(embeds).ToArray();
 
             Preconditions.AtMost(allowedMentions?.RoleIds?.Count ?? 0, 100, nameof(allowedMentions.RoleIds), "A max of 100 role Ids are allowed.");
             Preconditions.AtMost(allowedMentions?.UserIds?.Count ?? 0, 100, nameof(allowedMentions.UserIds), "A max of 100 user Ids are allowed.");
             Preconditions.AtMost(embeds.Length, 10, nameof(embeds), "A max of 10 embeds are allowed.");
+            Preconditions.ValidatePoll(poll);
 
             foreach (var attachment in attachments)
             {
@@ -383,31 +409,41 @@ namespace Discord.WebSocket
             if (allowedMentions != null && allowedMentions.AllowedTypes.HasValue)
             {
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Users) &&
-                    allowedMentions.UserIds != null && allowedMentions.UserIds.Count > 0)
+                    allowedMentions.UserIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Users flag is mutually exclusive with the list of User Ids.", nameof(allowedMentions));
                 }
 
                 if (allowedMentions.AllowedTypes.Value.HasFlag(AllowedMentionTypes.Roles) &&
-                    allowedMentions.RoleIds != null && allowedMentions.RoleIds.Count > 0)
+                    allowedMentions.RoleIds is { Count: > 0 })
                 {
                     throw new ArgumentException("The Roles flag is mutually exclusive with the list of Role Ids.", nameof(allowedMentions));
                 }
             }
-
-            var flags = MessageFlags.None;
-
+            if (components?.Components?.Any(x => x.Type != ComponentType.ActionRow) ?? false)
+                flags |= MessageFlags.ComponentsV2;
             if (ephemeral)
                 flags |= MessageFlags.Ephemeral;
 
-            var args = new API.Rest.UploadWebhookFileParams(attachments.ToArray()) { Flags = flags, Content = text, IsTTS = isTTS, Embeds = embeds.Any() ? embeds.Select(x => x.ToModel()).ToArray() : Optional<API.Embed[]>.Unspecified, AllowedMentions = allowedMentions?.ToModel() ?? Optional<API.AllowedMentions>.Unspecified, MessageComponents = components?.Components.Select(x => new API.ActionRowComponent(x)).ToArray() ?? Optional<API.ActionRowComponent[]>.Unspecified };
-            return await InteractionHelper.SendFollowupAsync(Discord, args, Token, Channel, options).ConfigureAwait(false);
+            Preconditions.ValidateMessageFlags(flags);
+
+            var args = new API.Rest.UploadWebhookFileParams(attachments.ToArray())
+            {
+                Flags = flags,
+                Content = text,
+                IsTTS = isTTS,
+                Embeds = embeds.Any() ? embeds.Select(x => x.ToModel()).ToArray() : Optional<API.Embed[]>.Unspecified,
+                AllowedMentions = allowedMentions?.ToModel() ?? Optional<API.AllowedMentions>.Unspecified,
+                MessageComponents = components?.Components.Select(x => x.ToModel()).ToArray() ?? Optional<IMessageComponent[]>.Unspecified,
+                Poll = poll?.ToModel() ?? Optional<CreatePollParams>.Unspecified
+            };
+            return InteractionHelper.SendFollowupAsync(Discord, args, Token, Channel, options);
         }
 
         /// <inheritdoc/>
         public async Task DeferLoadingAsync(bool ephemeral = false, RequestOptions options = null)
         {
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot defer an interaction after {InteractionHelper.ResponseTimeLimit} seconds of no response/acknowledgement");
 
             var response = new API.InteractionResponse
@@ -431,7 +467,7 @@ namespace Discord.WebSocket
         /// <inheritdoc/>
         public override async Task DeferAsync(bool ephemeral = false, RequestOptions options = null)
         {
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot defer an interaction after {InteractionHelper.ResponseTimeLimit} seconds of no response/acknowledgement");
 
             var response = new API.InteractionResponse
@@ -458,7 +494,7 @@ namespace Discord.WebSocket
             if (!IsValidToken)
                 throw new InvalidOperationException("Interaction token is no longer valid");
 
-            if (!InteractionHelper.CanSendResponse(this))
+            if (!InteractionHelper.CanSendResponse(this) && Discord.ResponseInternalTimeCheck)
                 throw new TimeoutException($"Cannot respond to an interaction after {InteractionHelper.ResponseTimeLimit} seconds!");
 
             var response = new API.InteractionResponse

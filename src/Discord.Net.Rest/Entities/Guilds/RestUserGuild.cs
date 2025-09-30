@@ -24,6 +24,12 @@ namespace Discord.Rest
         /// <inheritdoc />
         public GuildFeatures Features { get; private set; }
 
+        /// <inheritdoc />
+        public int? ApproximateMemberCount { get; private set; }
+
+        /// <inheritdoc />
+        public int? ApproximatePresenceCount { get; private set; }
+
         internal RestUserGuild(BaseDiscordClient discord, ulong id)
             : base(discord, id)
         {
@@ -42,12 +48,12 @@ namespace Discord.Rest
             Name = model.Name;
             Permissions = new GuildPermissions(model.Permissions);
             Features = model.Features;
+            ApproximateMemberCount = model.ApproximateMemberCount.IsSpecified ? model.ApproximateMemberCount.Value : null;
+            ApproximatePresenceCount = model.ApproximatePresenceCount.IsSpecified ? model.ApproximatePresenceCount.Value : null;
         }
 
-        public async Task LeaveAsync(RequestOptions options = null)
-        {
-            await Discord.ApiClient.LeaveGuildAsync(Id, options).ConfigureAwait(false);
-        }
+        public Task LeaveAsync(RequestOptions options = null)
+            => Discord.ApiClient.LeaveGuildAsync(Id, options);
 
         public async Task<RestGuildUser> GetCurrentUserGuildMemberAsync(RequestOptions options = null)
         {
@@ -56,10 +62,8 @@ namespace Discord.Rest
         }
 
         /// <inheritdoc />
-        public async Task DeleteAsync(RequestOptions options = null)
-        {
-            await Discord.ApiClient.DeleteGuildAsync(Id, options).ConfigureAwait(false);
-        }
+        public Task DeleteAsync(RequestOptions options = null)
+            => Discord.ApiClient.DeleteGuildAsync(Id, options);
 
         public override string ToString() => Name;
         private string DebuggerDisplay => $"{Name} ({Id}{(IsOwner ? ", Owned" : "")})";

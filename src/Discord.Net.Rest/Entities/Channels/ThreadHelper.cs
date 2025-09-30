@@ -11,7 +11,7 @@ namespace Discord.Rest
 {
     internal static class ThreadHelper
     {
-        public static async Task<Model> CreateThreadAsync(BaseDiscordClient client, ITextChannel channel, string name, ThreadType type = ThreadType.PublicThread,
+        public static Task<Model> CreateThreadAsync(BaseDiscordClient client, ITextChannel channel, string name, ThreadType type = ThreadType.PublicThread,
             ThreadArchiveDuration autoArchiveDuration = ThreadArchiveDuration.OneDay, IMessage message = null, bool? invitable = null, int? slowmode = null, RequestOptions options = null)
         {
             if (channel is INewsChannel && type != ThreadType.NewsThread)
@@ -26,17 +26,13 @@ namespace Discord.Rest
                 Ratelimit = slowmode.HasValue ? slowmode.Value : Optional<int?>.Unspecified,
             };
 
-            Model model;
-
             if (message != null)
-                model = await client.ApiClient.StartThreadAsync(channel.Id, message.Id, args, options).ConfigureAwait(false);
+                return client.ApiClient.StartThreadAsync(channel.Id, message.Id, args, options);
             else
-                model = await client.ApiClient.StartThreadAsync(channel.Id, args, options).ConfigureAwait(false);
-
-            return model;
+                return client.ApiClient.StartThreadAsync(channel.Id, args, options);
         }
 
-        public static async Task<Model> ModifyAsync(IThreadChannel channel, BaseDiscordClient client,
+        public static Task<Model> ModifyAsync(IThreadChannel channel, BaseDiscordClient client,
             Action<ThreadChannelProperties> func,
             RequestOptions options)
         {
@@ -55,7 +51,7 @@ namespace Discord.Rest
                 AppliedTags = args.AppliedTags,
                 Flags = args.Flags,
             };
-            return await client.ApiClient.ModifyThreadAsync(channel.Id, apiArgs, options).ConfigureAwait(false);
+            return client.ApiClient.ModifyThreadAsync(channel.Id, apiArgs, options);
         }
 
         public static async Task<IReadOnlyCollection<RestThreadChannel>> GetActiveThreadsAsync(IGuild guild, ulong channelId, BaseDiscordClient client, RequestOptions options)
@@ -150,11 +146,13 @@ namespace Discord.Rest
                 Preconditions.AtMost(stickers.Length, 3, nameof(stickers), "A max of 3 stickers are allowed.");
             }
 
-            if (flags is not MessageFlags.None and not MessageFlags.SuppressEmbeds)
-                throw new ArgumentException("The only valid MessageFlags are SuppressEmbeds and none.", nameof(flags));
+            if (components?.Components?.Any(x => x.Type != ComponentType.ActionRow) ?? false)
+                flags |= MessageFlags.ComponentsV2;
+            Preconditions.ValidateMessageFlags(flags);
 
             if (channel.Flags.HasFlag(ChannelFlags.RequireTag))
                 Preconditions.AtLeast(tagIds?.Length ?? 0, 1, nameof(tagIds), $"The channel {channel.Name} requires posts to have at least one tag.");
+
 
             var args = new CreatePostParams()
             {
@@ -167,7 +165,7 @@ namespace Discord.Rest
                     Content = text,
                     Embeds = embeds.Any() ? embeds.Select(x => x.ToModel()).ToArray() : Optional<API.Embed[]>.Unspecified,
                     Flags = flags,
-                    Components = components?.Components?.Any() ?? false ? components.Components.Select(x => new API.ActionRowComponent(x)).ToArray() : Optional<API.ActionRowComponent[]>.Unspecified,
+                    Components = components?.Components?.Any() ?? false ? components.Components.Select(x => x.ToModel()).ToArray() : Optional<IMessageComponent[]>.Unspecified,
                     Stickers = stickers?.Any() ?? false ? stickers.Select(x => x.Id).ToArray() : Optional<ulong[]>.Unspecified,
                 },
                 Tags = tagIds
@@ -217,7 +215,9 @@ namespace Discord.Rest
                 throw new ArgumentException("The only valid MessageFlags are SuppressEmbeds and none.", nameof(flags));
 
             if (channel.Flags.HasFlag(ChannelFlags.RequireTag))
-                throw new ArgumentException($"The channel {channel.Name} requires posts to have at least one tag.");
+            {
+                Preconditions.AtLeast(tagIds?.Length ?? 0, 1, nameof(tagIds), $"The channel {channel.Name} requires posts to have at least one tag.");
+            }
 
             var args = new CreateMultipartPostAsync(attachments.ToArray())
             {
@@ -226,10 +226,11 @@ namespace Discord.Rest
                 Content = text,
                 Embeds = embeds.Any() ? embeds.Select(x => x.ToModel()).ToArray() : Optional<API.Embed[]>.Unspecified,
                 Flags = flags,
-                MessageComponent = components?.Components?.Any() ?? false ? components.Components.Select(x => new API.ActionRowComponent(x)).ToArray() : Optional<API.ActionRowComponent[]>.Unspecified,
+                MessageComponent = components?.Components?.Any() ?? false ? components.Components.Select(x => x.ToModel()).ToArray() : Optional<IMessageComponent[]>.Unspecified,
                 Slowmode = slowmode,
                 Stickers = stickers?.Any() ?? false ? stickers.Select(x => x.Id).ToArray() : Optional<ulong[]>.Unspecified,
-                Title = title
+                Title = title,
+                TagIds = tagIds
             };
 
             var model = await client.ApiClient.CreatePostAsync(channel.Id, args, options);

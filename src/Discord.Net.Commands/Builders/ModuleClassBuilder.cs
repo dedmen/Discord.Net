@@ -13,9 +13,9 @@ namespace Discord.Commands
 
         public static async Task<IReadOnlyList<TypeInfo>> SearchAsync(Assembly assembly, CommandService service)
         {
-            bool IsLoadableModule(TypeInfo info)
+            static bool IsLoadableModule(TypeInfo info)
             {
-                return info.DeclaredMethods.Any(x => x.GetCustomAttribute<CommandAttribute>() != null) &&
+                return !info.IsAbstract && info.DeclaredMethods.Any(x => x.GetCustomAttribute<CommandAttribute>() != null) &&
                     info.GetCustomAttribute<DontAutoLoadAttribute>() == null;
             }
 
@@ -154,6 +154,9 @@ namespace Discord.Commands
                 switch (attribute)
                 {
                     case CommandAttribute command:
+                        builder.Summary ??= command.Summary;
+                        builder.Remarks ??= command.Remarks;
+                        builder.AddAliases(command.Aliases ?? Array.Empty<string>());
                         builder.AddAliases(command.Text);
                         builder.RunMode = command.RunMode;
                         builder.Name ??= command.Text;
@@ -208,7 +211,7 @@ namespace Discord.Commands
                     await instance.BeforeExecuteAsync(cmd).ConfigureAwait(false);
                     instance.BeforeExecute(cmd);
 
-                    var task = method.Invoke(instance, args) as Task ?? Task.Delay(0);
+                    var task = method.Invoke(instance, args) as Task ?? Task.CompletedTask;
                     if (task is Task<RuntimeResult> resultTask)
                     {
                         return await resultTask.ConfigureAwait(false);

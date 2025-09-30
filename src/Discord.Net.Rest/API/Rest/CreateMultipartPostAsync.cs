@@ -24,10 +24,11 @@ namespace Discord.API.Rest
         public Optional<string> Content { get; set; }
         public Optional<Embed[]> Embeds { get; set; }
         public Optional<AllowedMentions> AllowedMentions { get; set; }
-        public Optional<ActionRowComponent[]> MessageComponent { get; set; }
+        public Optional<IMessageComponent[]> MessageComponent { get; set; }
         public Optional<MessageFlags?> Flags { get; set; }
         public Optional<ulong[]> Stickers { get; set; }
         public Optional<ulong[]> TagIds { get; set; }
+        public Optional<CreatePollParams> Poll { get; set; }
 
         public CreateMultipartPostAsync(params FileAttachment[] attachments)
         {
@@ -46,6 +47,8 @@ namespace Discord.API.Rest
 
             if (Slowmode.IsSpecified)
                 payload["rate_limit_per_user"] = Slowmode.Value;
+            if (TagIds.IsSpecified)
+                payload["applied_tags"] = TagIds.Value;
 
             // message
             if (Content.IsSpecified)
@@ -60,8 +63,8 @@ namespace Discord.API.Rest
                 message["sticker_ids"] = Stickers.Value;
             if (Flags.IsSpecified)
                 message["flags"] = Flags.Value;
-            if (TagIds.IsSpecified)
-                message["applied_tags"] = TagIds.Value;
+            if (Poll.IsSpecified)
+                message["poll"] = Poll.Value;
 
             List<object> attachments = new();
 
@@ -78,7 +81,8 @@ namespace Discord.API.Rest
                 {
                     id = (ulong)n,
                     filename = filename,
-                    description = attachment.Description ?? Optional<string>.Unspecified
+                    description = attachment.Description ?? Optional<string>.Unspecified,
+                    is_thumbnail = attachment.IsThumbnail,
                 });
             }
 

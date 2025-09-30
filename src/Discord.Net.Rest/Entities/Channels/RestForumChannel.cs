@@ -47,15 +47,15 @@ namespace Discord.Rest
         /// <inheritdoc/>
         public string Mention => MentionUtils.MentionChannel(Id);
 
-        internal RestForumChannel(BaseDiscordClient client, IGuild guild, ulong id)
-            : base(client, guild, id)
+        internal RestForumChannel(BaseDiscordClient client, IGuild guild, ulong id, ulong guildId)
+            : base(client, guild, id, guildId)
         {
 
         }
 
         internal new static RestForumChannel Create(BaseDiscordClient discord, IGuild guild, Model model)
         {
-            var entity = new RestForumChannel(discord, guild, model.Id);
+            var entity = new RestForumChannel(discord, guild, model.Id, guild?.Id ?? model.GuildId.Value);
             entity.Update(model);
             return entity;
         }
@@ -75,7 +75,7 @@ namespace Discord.Rest
 
             DefaultSortOrder = model.DefaultSortOrder.GetValueOrDefault();
 
-            Tags = model.ForumTags.GetValueOrDefault(Array.Empty<API.ForumTags>()).Select(
+            Tags = model.ForumTags.GetValueOrDefault(Array.Empty<API.ForumTag>()).Select(
                 x => new ForumTag(x.Id, x.Name, x.EmojiId.GetValueOrDefault(null), x.EmojiName.GetValueOrDefault(), x.Moderated)
             ).ToImmutableArray();
 

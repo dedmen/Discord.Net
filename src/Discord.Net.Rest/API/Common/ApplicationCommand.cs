@@ -14,6 +14,9 @@ namespace Discord.API
         [JsonProperty("application_id")]
         public ulong ApplicationId { get; set; }
 
+        [JsonProperty("guild_id")]
+        public Optional<ulong> GuildId { get; set; }
+
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -47,5 +50,11 @@ namespace Discord.API
 
         [JsonProperty("nsfw")]
         public Optional<bool?> Nsfw { get; set; }
+
+        [JsonProperty("contexts")]
+        public Optional<InteractionContextType[]> ContextTypes { get; set; }
+
+        [JsonProperty("integration_types")]
+        public Optional<ApplicationIntegrationType[]> IntegrationTypes { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -15,10 +16,15 @@ namespace Discord.Interactions.Builders
 
         public static async Task<IEnumerable<TypeInfo>> SearchAsync(Assembly assembly, InteractionService commandService)
         {
-            static bool IsLoadableModule(TypeInfo info)
-            {
-                return info.DeclaredMethods.Any(x => x.GetCustomAttribute<SlashCommandAttribute>() != null);
-            }
+            static bool IsLoadableModule(TypeInfo info) =>
+                !info.IsAbstract &&
+                info.DeclaredMethods
+                    .SelectMany(x => x.GetCustomAttributes())
+                    .Any(x => x is SlashCommandAttribute
+                                or ComponentInteractionAttribute
+                                or ContextCommandAttribute
+                                or AutocompleteCommandAttribute
+                                or ModalInteractionAttribute);
 
             var result = new List<TypeInfo>();
 
@@ -57,7 +63,7 @@ namespace Discord.Interactions.Builders
                 result.Add(type.AsType(), moduleInfo);
             }
 
-            await commandService._cmdLogger.DebugAsync($"Successfully built {built.Count} Slash Command modules.").ConfigureAwait(false);
+            await commandService._cmdLogger.DebugAsync($"Successfully built {built.Count} interaction modules.").ConfigureAwait(false);
 
             return result;
         }
@@ -80,16 +86,20 @@ namespace Discord.Interactions.Builders
                             builder.Description = group.Description;
                         }
                         break;
+#pragma warning disable CS0618 // Type or member is obsolete
                     case DefaultPermissionAttribute defPermission:
                         {
                             builder.DefaultPermission = defPermission.IsDefaultPermission;
                         }
                         break;
+#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning disable CS0618 // Type or member is obsolete
                     case EnabledInDmAttribute enabledInDm:
-                        {
+                    {
                             builder.IsEnabledInDm = enabledInDm.IsEnabled;
                         }
                         break;
+#pragma warning restore CS0618 // Type or member is obsolete
                     case DefaultMemberPermissionsAttribute memberPermission:
                         {
                             builder.DefaultMemberPermissions = memberPermission.Permissions;
@@ -104,6 +114,12 @@ namespace Discord.Interactions.Builders
                     case NsfwCommandAttribute nsfwCommand:
                         builder.SetNsfw(nsfwCommand.IsNsfw);
                         break;
+                    case CommandContextTypeAttribute contextType:
+                        builder.WithContextTypes(contextType.ContextTypes?.ToArray());
+                        break;
+                    case IntegrationTypeAttribute integrationType:
+                        builder.WithIntegrationTypes(integrationType.IntegrationTypes?.ToArray());
+                        break;
                     default:
                         builder.AddAttributes(attribute);
                         break;
@@ -116,7 +132,7 @@ namespace Discord.Interactions.Builders
             var validContextCommands = methods.Where(IsValidContextCommandDefinition);
             var validInteractions = methods.Where(IsValidComponentCommandDefinition);
             var validAutocompleteCommands = methods.Where(IsValidAutocompleteCommandDefinition);
-            var validModalCommands = methods.Where(IsValidModalCommanDefinition);
+            var validModalCommands = methods.Where(IsValidModalCommandDefinition);
 
             Func<IServiceProvider, IInteractionModuleBase> createInstance = commandService._useCompiledLambda ?
                 ReflectionUtils<IInteractionModuleBase>.CreateLambdaBuilder(typeInfo, commandService) : ReflectionUtils<IInteractionModuleBase>.CreateBuilder(typeInfo, commandService);
@@ -177,6 +193,7 @@ namespace Discord.Interactions.Builders
                             builder.RunMode = command.RunMode;
                         }
                         break;
+#pragma warning disable CS0618 // Type or member is obsolete
                     case DefaultPermissionAttribute defaultPermission:
                         {
                             builder.DefaultPermission = defaultPermission.IsDefaultPermission;
@@ -187,6 +204,7 @@ namespace Discord.Interactions.Builders
                             builder.IsEnabledInDm = enabledInDm.IsEnabled;
                         }
                         break;
+#pragma warning restore CS0618 // Type or member is obsolete
                     case DefaultMemberPermissionsAttribute memberPermission:
                         {
                             builder.DefaultMemberPermissions = memberPermission.Permissions;
@@ -197,6 +215,12 @@ namespace Discord.Interactions.Builders
                         break;
                     case NsfwCommandAttribute nsfwCommand:
                         builder.SetNsfw(nsfwCommand.IsNsfw);
+                        break;
+                    case CommandContextTypeAttribute contextType:
+                        builder.WithContextTypes(contextType.ContextTypes.ToArray());
+                        break;
+                    case IntegrationTypeAttribute integrationType:
+                        builder.WithIntegrationTypes(integrationType.IntegrationTypes.ToArray());
                         break;
                     default:
                         builder.WithAttributes(attribute);
@@ -232,6 +256,7 @@ namespace Discord.Interactions.Builders
                             command.CheckMethodDefinition(methodInfo);
                         }
                         break;
+#pragma warning disable CS0618 // Type or member is obsolete
                     case DefaultPermissionAttribute defaultPermission:
                         {
                             builder.DefaultPermission = defaultPermission.IsDefaultPermission;
@@ -242,6 +267,7 @@ namespace Discord.Interactions.Builders
                             builder.IsEnabledInDm = enabledInDm.IsEnabled;
                         }
                         break;
+#pragma warning restore CS0618 // Type or member is obsolete
                     case DefaultMemberPermissionsAttribute memberPermission:
                         {
                             builder.DefaultMemberPermissions = memberPermission.Permissions;
@@ -252,6 +278,12 @@ namespace Discord.Interactions.Builders
                         break;
                     case NsfwCommandAttribute nsfwCommand:
                         builder.SetNsfw(nsfwCommand.IsNsfw);
+                        break;
+                    case CommandContextTypeAttribute contextType:
+                        builder.WithContextTypes(contextType.ContextTypes.ToArray());
+                        break;
+                    case IntegrationTypeAttribute integrationType:
+                        builder.WithIntegrationTypes(integrationType.IntegrationTypes.ToArray());
                         break;
                     default:
                         builder.WithAttributes(attribute);
@@ -398,7 +430,7 @@ namespace Discord.Interactions.Builders
                 {
                     await instance.BeforeExecuteAsync(commandInfo).ConfigureAwait(false);
                     instance.BeforeExecute(commandInfo);
-                    var task = commandInvoker(instance, args) ?? Task.Delay(0);
+                    var task = commandInvoker(instance, args) ?? Task.CompletedTask;
 
                     if (task is Task<RuntimeResult> runtimeTask)
                     {
@@ -413,8 +445,9 @@ namespace Discord.Interactions.Builders
                 }
                 catch (Exception ex)
                 {
-                    await commandService._cmdLogger.ErrorAsync(ex).ConfigureAwait(false);
-                    return ExecuteResult.FromError(ex);
+                    var interactionException = new InteractionException(commandInfo, context, ex);
+                    await commandService._cmdLogger.ErrorAsync(interactionException).ConfigureAwait(false);
+                    return ExecuteResult.FromError(interactionException);
                 }
                 finally
                 {
@@ -437,6 +470,10 @@ namespace Discord.Interactions.Builders
             builder.Description = paramInfo.Name;
             builder.IsRequired = !paramInfo.IsOptional;
             builder.DefaultValue = paramInfo.DefaultValue;
+
+            var supportedNumericalRange = paramInfo.GetSupportedNumericalRange();
+            builder.MinValue = supportedNumericalRange.Min;
+            builder.MaxValue = supportedNumericalRange.Max;
 
             foreach (var attribute in attributes)
             {
@@ -469,9 +506,15 @@ namespace Discord.Interactions.Builders
                             builder.WithAutocompleteHandler(autocomplete.AutocompleteHandlerType, services);
                         break;
                     case MaxValueAttribute maxValue:
+                        if (maxValue.Value > supportedNumericalRange.Max)
+                            throw new ArgumentOutOfRangeException($"{nameof(maxValue)} cannot be greater than {supportedNumericalRange.Max}.");
+
                         builder.MaxValue = maxValue.Value;
                         break;
                     case MinValueAttribute minValue:
+                        if (minValue.Value < supportedNumericalRange.Min)
+                            throw new ArgumentOutOfRangeException($"{nameof(minValue)} cannot be less than {supportedNumericalRange.Min}.");
+
                         builder.MinValue = minValue.Value;
                         break;
                     case MinLengthAttribute minLength:
@@ -665,7 +708,7 @@ namespace Discord.Interactions.Builders
                 methodInfo.GetParameters().Length == 0;
         }
 
-        private static bool IsValidModalCommanDefinition(MethodInfo methodInfo)
+        private static bool IsValidModalCommandDefinition(MethodInfo methodInfo)
         {
             return methodInfo.IsDefined(typeof(ModalInteractionAttribute)) &&
                 (methodInfo.ReturnType == typeof(Task) || methodInfo.ReturnType == typeof(Task<RuntimeResult>)) &&

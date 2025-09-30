@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace Discord
@@ -100,10 +99,21 @@ namespace Discord
             AssertFlag(() => new GuildPermissions(createPrivateThreads: true), GuildPermission.CreatePrivateThreads);
             AssertFlag(() => new GuildPermissions(useExternalStickers: true), GuildPermission.UseExternalStickers);
             AssertFlag(() => new GuildPermissions(moderateMembers: true), GuildPermission.ModerateMembers);
+            AssertFlag(() => new GuildPermissions(viewMonetizationAnalytics: true), GuildPermission.ViewMonetizationAnalytics);
+            AssertFlag(() => new GuildPermissions(useSoundboard: true), GuildPermission.UseSoundboard);
+            AssertFlag(() => new GuildPermissions(sendVoiceMessages: true), GuildPermission.SendVoiceMessages);
+            AssertFlag(() => new GuildPermissions(useClydeAI: true), GuildPermission.UseClydeAI);
+            AssertFlag(() => new GuildPermissions(createGuildExpressions: true), GuildPermission.CreateGuildExpressions);
+            AssertFlag(() => new GuildPermissions(setVoiceChannelStatus: true), GuildPermission.SetVoiceChannelStatus);
+            AssertFlag(() => new GuildPermissions(sendPolls: true), GuildPermission.SendPolls);
+            AssertFlag(() => new GuildPermissions(useExternalApps: true), GuildPermission.UseExternalApps);
+            AssertFlag(() => new GuildPermissions(useExternalSounds: true), GuildPermission.UseExternalSounds);
+            AssertFlag(() => new GuildPermissions(createEvents: true), GuildPermission.CreateEvents);
+            AssertFlag(() => new GuildPermissions(pinMessages: true), GuildPermission.PinMessages);
         }
 
         /// <summary>
-        ///     Tests the behavior of <see cref="Discord.GuildPermissions.Modify(bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?, bool?)"/>
+        ///     Tests the behavior of <see cref="GuildPermissions.Modify"/>
         ///     with each of the parameters.
         /// </summary>
         [Fact]
@@ -178,6 +188,17 @@ namespace Discord
             AssertUtil(GuildPermission.CreatePrivateThreads, x => x.CreatePrivateThreads, (p, enable) => p.Modify(createPrivateThreads: enable));
             AssertUtil(GuildPermission.UseExternalStickers, x => x.UseExternalStickers, (p, enable) => p.Modify(useExternalStickers: enable));
             AssertUtil(GuildPermission.ModerateMembers, x => x.ModerateMembers, (p, enable) => p.Modify(moderateMembers: enable));
+            AssertUtil(GuildPermission.ViewMonetizationAnalytics, x => x.ViewMonetizationAnalytics, (p, enable) => p.Modify(viewMonetizationAnalytics: enable));
+            AssertUtil(GuildPermission.UseSoundboard, x => x.UseSoundboard, (p, enable) => p.Modify(useSoundboard: enable));
+            AssertUtil(GuildPermission.SendVoiceMessages, x => x.SendVoiceMessages, (p, enable) => p.Modify(sendVoiceMessages: enable));
+            AssertUtil(GuildPermission.UseClydeAI, x => x.UseClydeAI, (p, enable) => p.Modify(useClydeAI: enable));
+            AssertUtil(GuildPermission.CreateGuildExpressions, x => x.CreateGuildExpressions, (p, enable) => p.Modify(createGuildExpressions: enable));
+            AssertUtil(GuildPermission.SetVoiceChannelStatus, x => x.SetVoiceChannelStatus, (p, enable) => p.Modify(setVoiceChannelStatus: enable));
+            AssertUtil(GuildPermission.SendPolls, x => x.SendPolls, (p, enable) => p.Modify(sendPolls: enable));
+            AssertUtil(GuildPermission.UseExternalApps, x => x.UserExternalApps, (p, enable) => p.Modify(useExternalApps: enable));
+            AssertUtil(GuildPermission.UseExternalSounds, x => x.UserExternalSounds, (p, enable) => p.Modify(useExternalSounds: enable));
+            AssertUtil(GuildPermission.CreateEvents, x => x.CreateEvents, (p, enable) => p.Modify(createEvents: enable));
+            AssertUtil(GuildPermission.PinMessages, x => x.PinMessages, (p, enable) => p.Modify(pinMessages: enable));
         }
     }
 }

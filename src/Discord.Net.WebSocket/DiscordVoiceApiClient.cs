@@ -19,7 +19,7 @@ namespace Discord.Audio
     {
         #region DiscordVoiceAPIClient
         public const int MaxBitrate = 128 * 1024;
-        public const string Mode = "xsalsa20_poly1305";
+        public const string Mode = "aead_xchacha20_poly1305_rtpsize";
 
         public event Func<string, string, double, Task> SentRequest { add { _sentRequestEvent.Add(value); } remove { _sentRequestEvent.Remove(value); } }
         private readonly AsyncEvent<Func<string, string, double, Task>> _sentRequestEvent = new AsyncEvent<Func<string, string, double, Task>>();
@@ -55,7 +55,7 @@ namespace Discord.Audio
             GuildId = guildId;
             _connectionLock = new SemaphoreSlim(1, 1);
             _udp = udpSocketProvider();
-            _udp.ReceivedDatagram += async (data, index, count) =>
+            _udp.ReceivedDatagram += (data, index, count) =>
             {
                 if (index != 0 || count != data.Length)
                 {
@@ -63,7 +63,7 @@ namespace Discord.Audio
                     Buffer.BlockCopy(data, index, newData, 0, count);
                     data = newData;
                 }
-                await _receivedPacketEvent.InvokeAsync(data).ConfigureAwait(false);
+                return _receivedPacketEvent.InvokeAsync(data);
             };
 
             WebSocketClient = webSocketProvider();
@@ -83,10 +83,10 @@ namespace Discord.Audio
                     }
                 }
             };
-            WebSocketClient.TextMessage += async text =>
+            WebSocketClient.TextMessage += text =>
             {
                 var msg = JsonConvert.DeserializeObject<SocketFrame>(text);
-                await _receivedEvent.InvokeAsync((VoiceOpCode)msg.Operation, msg.Payload).ConfigureAwait(false);
+                return _receivedEvent.InvokeAsync((VoiceOpCode)msg.Operation, msg.Payload);
             };
             WebSocketClient.Closed += async ex =>
             {
@@ -129,40 +129,58 @@ namespace Discord.Audio
         #endregion
 
         #region WebSocket
-        public async Task SendHeartbeatAsync(RequestOptions options = null)
+        public Task SendHeartbeatAsync(int sequenceAck, RequestOptions options = null)
         {
-            await SendAsync(VoiceOpCode.Heartbeat, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), options: options).ConfigureAwait(false);
+            return SendAsync(VoiceOpCode.Heartbeat, new HeartbeatParams
+            {
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                SequenceAck = sequenceAck
+            },
+            options: options);
         }
-        public async Task SendIdentityAsync(ulong userId, string sessionId, string token)
+
+        public Task SendIdentityAsync(ulong userId, string sessionId, string token)
         {
-            await SendAsync(VoiceOpCode.Identify, new IdentifyParams
+            return SendAsync(VoiceOpCode.Identify, new IdentifyParams
             {
                 GuildId = GuildId,
                 UserId = userId,
                 SessionId = sessionId,
                 Token = token
-            }).ConfigureAwait(false);
+            });
         }
-        public async Task SendSelectProtocol(string externalIp, int externalPort)
+
+        public Task SendSelectProtocol(string externalIp)
         {
-            await SendAsync(VoiceOpCode.SelectProtocol, new SelectProtocolParams
+            return SendAsync(VoiceOpCode.SelectProtocol, new SelectProtocolParams
             {
                 Protocol = "udp",
                 Data = new UdpProtocolInfo
                 {
                     Address = externalIp,
-                    Port = externalPort,
+                    Port = UdpPort,
                     Mode = Mode
                 }
-            }).ConfigureAwait(false);
+            });
         }
-        public async Task SendSetSpeaking(bool value)
+
+        public Task SendSetSpeaking(bool value)
         {
-            await SendAsync(VoiceOpCode.Speaking, new SpeakingParams
+            return SendAsync(VoiceOpCode.Speaking, new SpeakingParams
             {
                 IsSpeaking = value,
                 Delay = 0
-            }).ConfigureAwait(false);
+            });
+        }
+
+        public Task SendResume(string token, string sessionId)
+        {
+            return SendAsync(VoiceOpCode.Resume, new ResumeParams
+            {
+                ServerId = GuildId,
+                SessionId = sessionId,
+                Token = token
+            });
         }
 
         public async Task ConnectAsync(string url)
@@ -174,6 +192,7 @@ namespace Discord.Audio
             }
             finally { _connectionLock.Release(); }
         }
+
         private async Task ConnectInternalAsync(string url)
         {
             ConnectionState = ConnectionState.Connecting;
@@ -228,12 +247,14 @@ namespace Discord.Audio
         #region Udp
         public async Task SendDiscoveryAsync(uint ssrc)
         {
-            var packet = new byte[70];
-            packet[0] = (byte)(ssrc >> 24);
-            packet[1] = (byte)(ssrc >> 16);
-            packet[2] = (byte)(ssrc >> 8);
-            packet[3] = (byte)(ssrc >> 0);
-            await SendAsync(packet, 0, 70).ConfigureAwait(false);
+            var packet = new byte[74];
+            packet[1] = 1;
+            packet[3] = 70;
+            packet[4] = (byte)(ssrc >> 24);
+            packet[5] = (byte)(ssrc >> 16);
+            packet[6] = (byte)(ssrc >> 8);
+            packet[7] = (byte)(ssrc >> 0);
+            await SendAsync(packet, 0, 74).ConfigureAwait(false);
             await _sentDiscoveryEvent.InvokeAsync().ConfigureAwait(false);
         }
         public async Task<ulong> SendKeepaliveAsync()

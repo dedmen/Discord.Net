@@ -52,7 +52,7 @@ namespace Discord.WebSocket
         ///     Gets the parent (category) of this channel in the guild's channel list.
         /// </summary>
         /// <returns>
-        ///     An <see cref="ICategoryChannel"/> representing the parent of this channel; <c>null</c> if none is set.
+        ///     An <see cref="ICategoryChannel"/> representing the parent of this channel; <see langword="null" /> if none is set.
         /// </returns>
         public ICategoryChannel Category
             => CategoryId.HasValue ? Guild.GetChannel(CategoryId.Value) as ICategoryChannel : null;
@@ -81,7 +81,7 @@ namespace Discord.WebSocket
 
             DefaultSortOrder = model.DefaultSortOrder.GetValueOrDefault();
 
-            Tags = model.ForumTags.GetValueOrDefault(Array.Empty<API.ForumTags>()).Select(
+            Tags = model.ForumTags.GetValueOrDefault(Array.Empty<API.ForumTag>()).Select(
                 x => new ForumTag(x.Id, x.Name, x.EmojiId.GetValueOrDefault(null), x.EmojiName.GetValueOrDefault(), x.Moderated)
             ).ToImmutableArray();
 

@@ -1,5 +1,457 @@
 # Changelog
 
+## [3.18.0] - 2025-07-19
+### Added
+- #3145 add `ApproximateUserAuthorizationCount` (6e1f9c1)
+- #3147 [CV2] add children component counts to `IComponentContainer` (f18c836)
+- #3153 [CV2] QoL & fixes (800a234)
+- #3156 User primary guild (79b455e)
+- #3131 support POLL_RESULT (46) in MessageType enum (dc3bd76)
+- #3162 Docs/components v2 :wires: (cf66ab4)
+
+### Fixed
+- #3138 Fix value of `TextDisplayBuilder.MaxContentLength` (b338d30)
+- #3140 Fixed incorrect ComponentType in TextDisplayBuilder. (7a74f78)
+- #3142 Fix overflow exception (0c1536d)
+- #3146 Fixed missing Type in constructor SelectMenuBuilder(SelectMenuComponent) (c07c28d)
+- #3148 fix(IsLoadableModule): return false for abstract classes (978f999)
+- #3152 Guild member `JoinedAt` nullability (c343ce9)
+- #3158 Certain global user properies not getting updated (f9ba642)
+
+### Misc
+- #3139 Fix visibility of `MessageComponent.Empty` (35d94ca)
+- #3144 edge case missed (1e50900)
+- #3161 Fix guild tag badge URL helper (80b4328)
+
+
+## [3.18.0-beta.3] - 2025-05-26
+
+### Fixed
+- #3130 correct typo (523212a)
+- #3125 Add empty constructors for containers (56d6980)
+- #3126 Include section accessories in `ComponentCount()` (5f2d173)
+- #3127 Change comment to reflect longer polls (9f9b093)
+- #3129 Fix error when only sending components in response to interactions (b1c2fcb)
+- #3135 Fix some CV2 oversights (35b493c)
+
+### Misc
+- #3133 refactor(TimestampTagStyles): replace ASCII integer values with character literals (e68fa50)
+
+
+## [3.18.0-beta.2] - 2025-05-09
+
+### Added
+- #3119 Add component => builder converters (b729380)
+- #3120 use `Color` for container `AccentColor` & fix action row validation (c888c84)
+- #3122 Fix `Id`s in `ActionRowComponent` and `SelectmenuComponent` (57cdec7)
+- #3123 Component search fixes & improvements (be8e6e0)
+
+### Fixed
+- #3121 fix & improve `ToBuilder` methods (4ab96c7)
+
+### Misc
+- #3108 Ensure the required gateway intent is available when connected to audio (f1ff191)
+
+
+## [3.18.0-beta.1] - 2025-05-08
+
+### Added
+- #3065 Components V2 (ba78e0c)
+- #3110 CV2 Find component by id (cc81669)
+
+### Fixed
+- #3106 Providing multiple message flags fails to pass validations (05a0acc)
+- #3114 Fix NRE responding with a modal info class with null required fields (2b6a912)
+
+### Misc
+- #3107 update component limits + add `ComponentCount()` extension (348928a)
+
+
+## [3.17.4] - 2025-04-26
+
+### Fixed
+- #3100 Fix NRE introduced in 3.17.3 (f67f1894)
+  
+
+## [3.17.3] - 2025-04-26
+### Added
+- #3088 Add handler for unknown Discord dispatch events (9b79f0b)
+- #3090 Per file attachment size limits (649f52b)
+
+### Fixed
+- #3084 Fixed type reader/converter parsing exception (88cfbe5)
+- #3091 Fixed modals with value type properties (a8523c5)
+- #3094 Fix WriteSilentFramesAsync sending a partial frame at first (2da25f3)
+
+### Misc
+- #3081 add missing gif sticker format (6f623a6)
+- #3087 Add size in CDN.GetGuildSplashUrl (fb90701)
+- #3092 Improved exception messages of builders (cce6274)
+- #3096 Refactor MentionedUsers in the SocketMessage (0c3e7a8)
+
+
+## [3.17.2] - 2025-03-09
+### Added 
+- #3074 Add `excludeDeleted` argument to `GetEntitlementsAsync` (9c9407b)
+
+### Fixed
+- #3063 `SocketApplicationCommand` missing `GuildId` (c625f5f)
+- #3064 Correct empty value exception (6e7b3c2)
+- #3068 Consider `AutoServiceScopes` in autocomplete handler executions (7fb537f)
+- #3070 Possibly fix mute & deaf state for guild users (5f6c26b)
+- #3072 AutoServiceScopes strikes again (d71fcb1)
+- #3073 SocketGuild.GetApplicationCommandAsync was fetching global commands (aa66928)
+- #3078 Add `EmptyServiceScope` (54e8416) 
+
+### Misc
+- #3075 Make Make GetShardFor(ulong guildId) & DiscordShardedClient.GetUserAsync() public (41ad6ac)
+- #3061 yeet `FluentAssertions` (52c2f0d)
+
+
+## [3.17.1] - 2025-01-19
+
+### Added
+- #3056 Add IAutomodRule.MentionRaidProtectionEnabled (0e9caf3)
+- #3052 Added Header and Subtext to the Format class (0174745)
+
+### Fixed
+- #3057 Use 8.0.x dependencies for net6 support (50aa278)
+- #3049 `Task.Delay(0)` => `Task.CompletedTask` (b5f5df0)
+- #3014 An AddSlashCommand overload should be AddAutocompleteCommand in ModuleBuilder (35e8122)
+- #3053 `DiscordSocketClient.GetEntitlementsAsync` requiring unused `BaseDiscordClient` parameter (d828cd8)
+
+### Misc 
+- #3046 Refactor & update member search v2 (36439b6)
+
+
+## [3.17.0] - 2024-12-20
+
+### Added
+- #3025 Build with .NET 9 SDK (164a289)
+- #3032 Add `net8.0` and `net9.0` (d780d6c)
+- #3033 Add `net8.0` and `net9.0` to the metapackage (93229f6)
+
+- #3005 Add StickerId to REST and WebSocket Sticker audit log data classes (8a2ea4b)
+- #3023 Scheduled event recurrence rule (b7208d4)
+- #3024 Support sending voice messages (5904ecd)
+- #3036 Support for multiple subscription tiers (79fade6)
+- #3017 Add support for keyed services. (3017f6b)
+  
+### Fixed
+- #2974 rest client add webporxy config, keep the processing logic with WebSocketProvider (292f8c4)
+- #3008 fix webhook ctor (433bdc2)
+- #3015 Fixes incorrect cast of parameters in CommandBuilder (aaa8df9)
+- #3028 Create a new scope when building interaction service modules if `AutoServiceScopes = true` (a1e50c4)
+- #3035 NRE in message commands in user app contexts (c78296f)
+- #3034 Entitlements `starts_at` is nullable (d5879c8)
+- #3031 Interaction Service failing to create scopes with some DI providers (a884ad1)
+- #3030 NRE on thread member creation without a guild user in the payload (96a8327)
+
+### Misc
+- #3021 Expose channel type property on `IChannel` (8b92969)
+- #3006 Add missing permissions (6b92cc2)
+- #3007 Allow setting SuppressNotification in webhook client (682d87e)
+- #3027 Eliminate the waste of checking arguments under the same conditions. (f644e68)
+- #3037 add missing overwrite perms (d2d8d73)
+- #3038 Clamp cache size (438e31e)
+
+
+## [3.16.0] - 2024-09-14
+
+### Added
+- #2918 Message Forwards (c4d90cd)
+- #2976 New interactions precondition attribute that supports app commands (1f252a3)
+- #2978 Add Application Approximate User Install Count (47f98bc)
+- #2987 Add guild profile banners (57eb906)
+- #3002 Add subscriptions support (88ea2ed)
+- #2994 Add more member flags (9b8c7b1)
+- #2989 Add GetRoleAsync (466b491)
+- #2986 Add StickFormat gif and animated guild icon (2aaa0fd)
+
+### Fixed
+- #3001 StackOverflow in sharded clients (c53aac3)
+  
+### Misc
+- #2979 Create a (Discord)Color using a string (bc84b94)
+- #2991 Minor optimization + make sure top level components are action rows (623a457)
+- #2995 Use interaction method in `InteractionModuleBase.DeleteOriginalResponse` (f65d3ad)
+- #2999 Option to dump gw payloads on errors (b87ec6e)
+  
+
+## [3.15.3] - 2024-07-21
+
+### Added
+- #2963 Application Emojis (26bb789)
+- [EXPERIMENTAL] #2931 Member search v2 (e18915a)
+- #2952 add `IsAvailable` to `GuildEmote` (cb79f04)
+- #2965 Add team member `Role` property (6e531a2)
+
+### Fixed
+- #2958 crash when poll is null in RestMessageComponent (24c7605)
+- #2962 incomplete validation when ChannelFlags.RequireTag is true (f5fdfb2)
+- #2948 Fix IndexOf bug in CreateBucketId (ec0ba49)
+- #2959 Fix automod related events in the sharded client (8b6be64)
+- #2966 Fix `CustomSticker.DeleteAsync()` (359f6db)
+
+### Misc
+- #2951 Update for the breaking change discord has made + v3 is cringe (8afea2c)
+- #2953 longer polls (ae49794)
+- #2956 Add missing role tags (6b691b1)
+- #2957 Longer MaxCustomBlockMessageLength (bae7861)
+
+
+## [3.15.2] - 2024-06-18
+### Hotfix
+- fix `AutocompleteAttribute` with empty constructor
+- fix `Emote` constructor related issues
+
+## [3.15.1] - 2024-06-18
+### Added
+- #2927 Add missing PollProperties (a59f4ba)
+- #2942 Add purchase notification (9d92435)
+- #2934 Add MessageCallData (21195a8)
+- #2932 Config Bypass for CanSendResponse (9030a5b)
+- #2933 Premium Buttons (531b5eb)
+- #2941 Add UseExternalApps permission (f7f29d5)
+### Misc
+- #2936 Public constructor for Emote (3be72a8)
+- #2935 Generic autocomplete (35b102a)
+- #2929 Enable nuget debug symbols. (aa424f6)
+
+## [3.15.0] - 2024-05-12
+### Added
+- #2902 Polls (476ec06)
+- #2898 Guild bans with seconds prune period (d1da2a0)
+- #2903 Create `RequireTeamAttribute` (753724d)
+- #2906 Create `DoHierarchyCheckAttribute` (1a5cba8)
+- #2923 Create `RequireRoleAttribute` (5dadcb2)
+- #2919 More store stuff (f9086d3)
+- #2920 Add `SocketInteraction.InteractionChannel` (3054505)
+
+### Fixed
+- #2910 RestDMChannel relies on recipient (13ea566)
+- #2911 Don't rely on Guild for id (397a887)
+- #2912 Don't depend on WebSocket for Interaction service (a2f624e)
+- #2922 NRE with rest interactions & no api call (again) (83fdc89) 
+- #2924 Fix null error when using a `SelectMenuBuilder` constructor (93cb71a)
+
+### Misc
+- #2905 Remove analyzer project & resolve some build warnings (7aab366)
+- #2913 Replace generic exceptions. (54d2fe5)
+- #2908 Support options in Rest's AddRoleAsync (b70e21b)
+- #2914 `.Distinct()` roles(ids) in `IGuildUser.ModifyAsync` (27a0785)
+- #2915 Improve bulk bans (f85bf9a)
+
+
+## [3.14.1] - 2024-03-19
+### Fixed
+- Version number contains commit hash
+
+## [3.14.0] - 2024-03-19
+
+### Added
+- #2849 Allow setting channel topic to null when creating channels (7c96844)
+- #2832 Add Icon size parameter to `GetGuildIconUrl` CDN method (eb5678a)
+- #2883 Initial user apps support (24a6978)
+- #2881 Bulk ban support (03402cd)
+- #2880 More banner support (4efe3be)
+- #2858 Allow setting custom status with `SetGameAsync` (ee386b1)
+- #2870 SentRequest event (fc2fc87)
+- #2873 Voice reconnection and resuming (09680c5)
+- #2879 Support setting banner on bot profiles (d0c0a56)
+
+### Fixed
+- #2866 Allow switching voice channels without disconnecting (external clients only) (5a62ba1)
+- #2857 Receiving voice packets (use system-assigned port) (1a16f4d)
+- #2850 NRE in automod audit logs (1eb7a53)
+- #2862 Fixed a bug when creating a `SelectMenuBuilder` from a `SelectMenuComponent` incorrectly set the `CustomId` (6870ac5)
+- Incorrect ConnectionState of a DiscordSocketClient casted to IDiscordClient/BaseSocketClient (955fae0)
+- #2867 `InteractionService.AddModulesXAsync` command duplication (2787db3)
+
+### Misc
+- #2806 Update library dependencies (bfc8dc2)
+- #2847 Remove some redundant notes & small updates (d0e9c8b)
+- #2854 Refactor `MaxBitrate` and `UploadLimit` in `GuildHelper` (6256de4)
+- #2869 Fix optional param being non-optional (fa51f0a)
+
+
+## [3.13.1] - 2024-02-11
+
+### Added
+- #2804 Add Incident actions message types (178ff58)
+- #2805 Add `AppliedTags` to `DiscordWebhookClient.SendXAsync` (d382e5c)
+- #2700 Optional Aliasses, Summary and Remarks Properties to CommandAttribute (5a8582c)
+- #2584 Log InteractionCommand execution exceptions in Wrapped Exception (0f0f3f7)
+- #2827 `44` (Add message type 44) (541571c)
+- #2837 Allow creating announcement channels (f1777de)
+
+### Fixed
+- #2801 Add null check in `SelectMenuBuilder` (b18cc31)
+- #2813 Incorrect json model for Guild Scheduled Events (de4b6b9)
+- #2800 Warning about missing intents not being logged (8227d70)
+- #2818 `GetEventCoverImageUrl` throwing NRE in case event cover image is null (138e18c)
+
+### Misc
+- #2807 Incorrect xmldoc (d234db7)
+- #2823 Update sample projects & samples in docs (e2e8c0f)
+- #2819 [2024] Very important changes (update licence & docs) (ff9b9b4)
+- #2831 Add checks for whitespace-only strings in button builder (89efe0f)
+- #2835 Additional select menu option validations (4d7e384)
+
+
+## [3.13.0] - 2023-11-18
+
+### Added
+- #2707 Added Super reactions support (9fd5c6c)
+- #2725 Added Media channel support (e3cd340)
+- #2753 Added additional Update/Modify Async Attachment's (ae275ab)
+- #2769 Added missing parameters to `RespondWithModalAsync` methods and implement missing overloads (4e78aec)
+- #2773 Added useful utility methods to `ModalBuilder` (8591de7)
+- #2776 Added Select menu default values (ac274d4)
+- #2777 Added Voice channel status support (8060dcf)
+- #2781 Added premium subscriptions support (7723f61)
+- #2782 Added Avatar decorations support (f64d9d6)
+- #2784 Added App subscriptions additional support (a9a8da4)
+- #2783 Added Guild incident actions (9b36df3)
+- #2787 Added Embed `ToJsonString` & `(Try)Parse` (7b5c40a)
+- #2791 Added Automod member profile moderation, new application fields, use clyde ai & guild invenory settings (699554a)
+- #2792 Added create roles with icons (b45b774)
+- #2796 Added clips support (poggers) (89bebc3)
+
+### Fixed
+- #2758 Fixed Slash Command Localizations lost after AddCommandsToGuildAsync and deleteMissing = false (8d5022a)
+- #2759 Fixed missing null checks in `RoleConnectionProperties` (ab3b30d)
+- #2766 Fixed UpdateAsync Remove Attachment Bug (a668757)
+- #2763 Fixed SocketKickAuditLogData User never having value (5cfec05)
+- #2770 Fixed URL encode timestamps sent as query parameters (589c58a)
+- #2774 Fixed some IDiscordClient methods are not properly implemented in clients (8baf913)
+- #2789 Fixed multiline values in short TextInputs (33e8340)
+
+
+### Misc
+- #2739 Remove some unnecessary async/await (86655a8)
+- #2754 Replace Moq with NSubstitute for Mocking in GuildHelperTests (b988a18)
+- #2765 Use Discord heartbeat interval in audio. (9cedfbc)
+- #2771 Extract `GetDisplayAvatarUrl` in `IUser` (b1787d8)
+
+
+## [3.12.0] - 2023-08-10
+
+### Added
+- #2644 Added `ComponentBuilder` component removal methods. (d5d7378)
+- #2668 Added a method for sending silent audio frames on `OpusEncodeStream`. (59094d2)
+- #2675 Added missing `remove` property to `MemberRoleAudit`. (5fb9152)
+- #2720 Added role & attachment flags (a421715)
+- #2723 Added missing properties to webhook implementation (2b8584d)
+- #2729 Added new onboarding methods/properties (8cd4c1c)
+- #2730 Added new `ModifyCurrentApplication` features (166d40f)
+- #2749 Added support for setting custom status (b2820d5)
+
+### Fixed
+- #2711 Fixed modifying guild resets preferred locale (12c50f2)
+- #2713 Fixed some `ReplyAsync` methods missing `MessageFlags` parameter. (56769cb)
+- #2714 Fixed disconnecting socket client not sending close code. (6bb3777)
+- #2722 Fixed modal's `DeferAsync` implementation (5f580f6)
+- #2726 Fixed global name not being passed to `UserUpdated` event (9dfd4d7)
+- #2742 Fixed `ModifyAsync` attachments #2236 (0c12079)
+- #2745 Fixed `GetMessagesAsync` with `Direction.After` not working as expected (c922497)
+
+
+## [3.11.0] - 2023-6-27
+
+### Added
+- #2616 Added guild Onboarding support (3a8f76c)
+- #2627 Added `Audit Log Created` gateway event support (dff6a57)
+- #2645 Added `Message` property and `UpdateAsync()` to `IModalInteraction` (83dfa0c)
+- #2648 Added `MaxStageVideoChannelUsers` property to `IGuild` (bdd755b)
+- #2665 Added voice messages support (f171684)
+- #2619 Added get current bot application information (9ef5a76)
+- #2649 Added `SafetyAlertsChannelId` to `IGuild` (2112e1f)
+- #2696 Added support for the new username system (df717e6)
+- #2620 Added support for filtering audit log entries by after id (529fe3d)
+- #2622 Added default thread ratelimit in guild text channels (f9c8530)
+
+### Fixed
+- #2628 Allow creating stickers with no description (c950106)
+- #2682 Fixed missing `JsonProperty` attributes in params for modifying automod rules (9df4438)
+- #2702 Fixed `TypingStartedEvent` model to support Clyde (547bc92)
+- #2652 Fixed streams being incorrectly disposed in `DefaultRestClient` (84431de)
+- #2708 Fixed threads not getting removed from cache on `THREAD_DELETE` (fe4130d)
+- #2688 Fixed some internal classes being public (9ddd922)
+- #2687 Allow more than 1 action to be registered per automod rule (200bed7)
+- #2683 Fixed mention limit, regex patterns & allowlist for automod rules (a41fa62)
+- #2663 Fixed T3 file upload size to be 25MiB (98f974d)
+- #2662 Fixed duplicate `SlashCommandExecuted` event on failed result (fe9657a)
+- #2651 Fixed name translations (`NameLocalizations`) for `ChoiceAttribute` (75ae488)
+- #2647 Fixed `ChannelPermissions.All()` exception on forums (6265dd5)
+- #2642 Enforce rate limits on 429s (69cce5b)
+
+### Misc
+- #2601 Add missing json error (a8ae1e9)
+- #2609 Refactor `SendMessageAsync` & `SendFile(s)Async` methods & modify webhook message attachments (898ee56)
+- #2646 Create forum channels with default layout (0720049)
+- #2666 Switch `channel` to `channel_id` in interactions (d5ba7d2)
+- #2670 Disable FEC in OPUS (2be9b00)
+
+## [3.10.0] - 2023-03-27
+
+### Added
+- #2507 Added selects v2 support (48fb1b5)
+- #2509 Added `SendFileAsync` to `UserExtensions` (25cfb88)
+- #2510 Added missing invite guild properties & welcome screen support (7c535b9)
+- #2520 Added `ClientDisconnect` event for audio client. (4cad546)
+- #2521 Added `OwnerId` to `IThreadChannel` and `RestThreadChannel`
+- #2521 Added `ActiveDeveloper` to `UserProperies`
+- #2523 Added emojis from Emoji 13.0, Emoji 13.1 and Emoji 14.0 (23b2822)
+- #2528 Added wildcard length quantifiers and `TreatAsRegex` property
+- #2530 Added application Role Connections Metadata support (37d868f)
+- #2531 Added age restricted (NSFW) application commands support (56b1a93)
+- #2537 Added `RemoveModulesFromGuildAsync` (7acbcfd)
+- #2560 Added app Command channel target permission (2616d35)
+- #2562 Added new message types & error codes (a3ee855)
+- #2564 Added `RespondWithModal()` which accepts an `IModal` instance as template (e7bda0f)
+- #2571 Added guild member flags (7d8d6ec)
+- #2573 Added missing VoiceChannel properties (1e21a6e)
+- #2574 Added `GetCurrentUser` method to `DiscordRestClient` (e3da96f)
+- #2574 Added `GetCurrentUserGuildMemberAsync` method to `DiscordRestClient` and `RestGuild` (e3da96f)
+- #2574 Added `GuildFeatures` property to `IUserGuild` (e3da96f)
+- #2575 Added `Thread` property to `RestMessage` (91e2084)
+- #2578 Added AutoMod support (673b02d)
+- #2579 Added `Thread` property to `IUserMessage` (0998285)
+- #2580 Added thread user member & thread members pagination (b085621)
+- #2582 Added `IIntegrationChannel` (75f3c91)
+- #2582 Added support for creating webhooks in forums (75f3c91)
+- #2590 Added `FollowAnnouncementChannelAsync` to `INewsChannel` (bb056df)
+- #2591 Added support for silent mentions (2ea8af1)
+- #2599 Added `AddModalCommand` to `ModalBuilder` with option to specify callback (50e0e59)
+- #2605 Added `GuildFeatures` to `GuildProperties` (177df2c)
+- #2603 Added support for creating forum posts with `DiscordWebhookClient` (e69e27a)
+- #2610 Added Text-In-Stage support & missing `IVoiceChannel` properties (76bb901)
+- #2613 Added AutoMod custom block message (709364a)
+- #2615 Added missing invite properties (abfa8d1)
+
+### Fixed
+- #2483 Fixed an NRE when event was changed from in channel to external or vice versa (493f604)
+- #2526 Fixed `GetActiveThreadsAsync` & add it to `ITextChannel` (bd2f719)
+- #2528 Fixed catastrophic backtracking (3b107c2)
+- #2532 Fixed permissions on deleteMissing=false (274be5d)
+- #2540 Fixed `reason` not being included in audit logs when calling `AddBanAsync` and `BanAsync` (e71faf7)
+- #2541 Fixed `CreatePost` methods for `IForumChannel` (a53f1df)
+- #2549 Fixed `NullReferenceException` caused by Options being undefined. (02d3ce6)
+- #2557 Fixed `customId` template generator to escape regex metachars used in â€¦ (1602437)
+- #2577 Fixed `GetEventCoverImageUrl` (0af835a)
+- #2600 Fixed gateway deadlock (0c27395)
+- #2606 Fixed AutoMod action executed event message being null (7b321af)
+
+### Misc
+- #2542 Resolve inconsistencies with components (f224eb0)
+- #2546 Argument handling with thread tags(c67642a)
+- #2551 Format the project with 'dotnet format' (257f246)
+- #2561 Remove outdated checks (94996e7)
+- #2572 Reduce `DateTime` Boilerplate from `LogMessage` (14b2901)
+- #2614 Optimize `Add/RemoveRolesAsync` methods (11481a1)
+- #2617 Update IP discovery to send 74 bytes (66e6329)
+
 ## [3.9.0] - 2022-12-23
 ### Added
 

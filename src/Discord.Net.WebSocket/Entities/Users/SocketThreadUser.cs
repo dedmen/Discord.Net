@@ -31,7 +31,7 @@ namespace Discord.WebSocket
 
         /// <inheritdoc/>
         public string DisplayName
-            => GuildUser.Nickname ?? GuildUser.Username;
+            => GuildUser.Nickname ?? GuildUser.GlobalName ?? GuildUser.Username;
 
         /// <inheritdoc/>
         public string Nickname
@@ -58,12 +58,45 @@ namespace Discord.WebSocket
             get => GuildUser.AvatarId;
             internal set => GuildUser.AvatarId = value;
         }
+
+        /// <inheritdoc />
+        public override string GlobalName
+        {
+            get => GlobalUser.GlobalName;
+            internal set => GlobalUser.GlobalName = value; 
+        }
+
+        /// <inheritdoc />
+        public override string AvatarDecorationHash
+        {
+            get => GlobalUser.AvatarDecorationHash;
+            internal set => GlobalUser.AvatarDecorationHash = value;
+        }
+
+        /// <inheritdoc />
+        public override ulong? AvatarDecorationSkuId
+        {
+            get => GlobalUser.AvatarDecorationSkuId;
+            internal set => GlobalUser.AvatarDecorationSkuId = value;
+        }
+
+        /// <inheritdoc />
+        public override PrimaryGuild? PrimaryGuild
+        {
+            get => GlobalUser.PrimaryGuild;
+            internal set => GlobalUser.PrimaryGuild = value;
+        }
+
         /// <inheritdoc/>
         public string DisplayAvatarId => GuildAvatarId ?? AvatarId;
 
         /// <inheritdoc/>
         public string GuildAvatarId
             => GuildUser.GuildAvatarId;
+
+        /// <inheritdoc/>
+        public string GuildBannerHash
+            => GuildUser.GuildBannerHash;
 
         /// <inheritdoc/>
         public override ushort DiscriminatorValue
@@ -231,14 +264,18 @@ namespace Discord.WebSocket
         IReadOnlyCollection<ulong> IGuildUser.RoleIds => GuildUser.Roles.Select(x => x.Id).ToImmutableArray();
 
         /// <inheritdoc />
-        string IGuildUser.GetDisplayAvatarUrl(ImageFormat format, ushort size) => GuildUser.GetDisplayAvatarUrl(format, size);
-
-        /// <inheritdoc />
         string IGuildUser.GetGuildAvatarUrl(ImageFormat format, ushort size) => GuildUser.GetGuildAvatarUrl(format, size);
 
-        internal override SocketGlobalUser GlobalUser { get => GuildUser.GlobalUser; set => GuildUser.GlobalUser = value; }
+        /// <inheritdoc />
+        string IGuildUser.GetGuildBannerUrl(ImageFormat format, ushort size) => GuildUser.GetGuildBannerUrl(format, size);
 
-        internal override SocketPresence Presence { get => GuildUser.Presence; set => GuildUser.Presence = value; }
+        /// <inheritdoc />
+        public override string GetDisplayAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
+            => GuildUser.GetGuildAvatarUrl() ?? base.GetDisplayAvatarUrl(format, size);
+
+        internal override SocketGlobalUser GlobalUser { get => GuildUser?.GlobalUser; set => GuildUser.GlobalUser = value; }
+
+        internal override SocketPresence Presence { get => GuildUser?.Presence; set => GuildUser.Presence = value; }
 
         /// <summary>
         ///     Gets the guild user of this thread user.

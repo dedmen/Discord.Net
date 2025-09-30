@@ -35,19 +35,26 @@ namespace Discord
         /// </summary>
         /// <returns>
         ///     An <see cref="ulong"/> snowflake identifier representing the user who created this emoji; 
-        ///     <c>null</c> if unknown.
+        ///     <see langword="null" /> if unknown.
         /// </returns>
         public ulong? CreatorId { get; }
 
-        internal GuildEmote(ulong id, string name, bool animated, bool isManaged, bool requireColons, IReadOnlyList<ulong> roleIds, ulong? userId) : base(id, name, animated)
+        /// <summary>
+        ///     Gets whether this emoji is available. <see langword="null" /> if unknown.
+        /// </summary>
+        public bool? IsAvailable { get; }
+
+        internal GuildEmote(ulong id, string name, bool animated, bool isManaged, bool requireColons, IReadOnlyList<ulong> roleIds, ulong? userId, bool? isAvailable) : base(id, name, animated)
         {
             IsManaged = isManaged;
             RequireColons = requireColons;
             RoleIds = roleIds;
             CreatorId = userId;
+            IsAvailable = isAvailable;
         }
 
         private string DebuggerDisplay => $"{Name} ({Id})";
+
         /// <summary>
         ///     Gets the raw representation of the emote.
         /// </summary>

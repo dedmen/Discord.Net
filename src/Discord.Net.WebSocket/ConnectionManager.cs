@@ -1,6 +1,7 @@
 using Discord.Logging;
 using Discord.Net;
 using System;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,15 +44,16 @@ namespace Discord
                 {
                     var ex2 = ex as WebSocketClosedException;
                     if (ex2?.CloseCode == 4006)
-                        CriticalError(new Exception("WebSocket session expired", ex));
+                        CriticalError(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, "WebSocket session expired", ex));
                     else if (ex2?.CloseCode == 4014)
-                        CriticalError(new Exception("WebSocket connection was closed", ex));
+                        CriticalError(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, "WebSocket connection was closed", ex));
                     else
-                        Error(new Exception("WebSocket connection was closed", ex));
+                        Error(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, "WebSocket connection was closed", ex));
                 }
                 else
-                    Error(new Exception("WebSocket connection was closed"));
-                return Task.Delay(0);
+                    Error(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, "WebSocket connection was closed"));
+
+                return Task.CompletedTask;
             });
         }
 
@@ -78,14 +80,15 @@ namespace Discord
                             nextReconnectDelay = 1000; //Reset delay
                             await _connectionPromise.Task.ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException ex)
-                        {
-                            // Added back for log out / stop to client. The connection promise would cancel and it would be logged as an error, shouldn't be the case.
-                            // ref #2026
+                        // remove for testing.
+                        //catch (OperationCanceledException ex)
+                        //{
+                        //    // Added back for log out / stop to client. The connection promise would cancel and it would be logged as an error, shouldn't be the case.
+                        //    // ref #2026
 
-                            Cancel(); //In case this exception didn't come from another Error call
-                            await DisconnectAsync(ex, !reconnectCancelToken.IsCancellationRequested).ConfigureAwait(false);
-                        }
+                        //    Cancel(); //In case this exception didn't come from another Error call
+                        //    await DisconnectAsync(ex, !reconnectCancelToken.IsCancellationRequested).ConfigureAwait(false);
+                        //}
                         catch (Exception ex)
                         {
                             Error(ex); //In case this exception didn't come from another Error call
@@ -171,19 +174,16 @@ namespace Discord
 
             await _onDisconnecting(ex).ConfigureAwait(false);
 
-            await _disconnectedEvent.InvokeAsync(ex, isReconnecting).ConfigureAwait(false);
             State = ConnectionState.Disconnected;
+            await _disconnectedEvent.InvokeAsync(ex, isReconnecting).ConfigureAwait(false);
             await _logger.InfoAsync("Disconnected").ConfigureAwait(false);
         }
 
-        public async Task CompleteAsync()
-        {
-            await _readyPromise.TrySetResultAsync(true).ConfigureAwait(false);
-        }
-        public async Task WaitAsync()
-        {
-            await _readyPromise.Task.ConfigureAwait(false);
-        }
+        public Task CompleteAsync()
+            => _readyPromise.TrySetResultAsync(true);
+
+        public Task WaitAsync()
+            => _readyPromise.Task;
 
         public void Cancel()
         {

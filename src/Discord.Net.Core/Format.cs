@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -24,11 +25,16 @@ namespace Discord
         public static string Url(string text, string url) => $"[{text}]({url})";
         /// <summary> Escapes a URL so that a preview is not generated. </summary>
         public static string EscapeUrl(string url) => $"<{url}>";
+        /// <summary> Returns a markdown-formatted string with header formatting. </summary>
+        public static string Header(string text, int level = 1)
+            => level < 1 || level > 3 ? text : $"{new string('#', level)} {text}";
+        /// <summary> Returns a markdown-formatted string with subtext formatting. </summary>
+        public static string Subtext(string text) => $"-# {text}";
 
         /// <summary> Returns a markdown-formatted string with codeblock formatting. </summary>
         public static string Code(string text, string language = null)
         {
-            if (language != null || text.Contains("\n"))
+            if (language is not null || text.Contains("\n"))
                 return $"```{language ?? ""}\n{text}\n```";
             else
                 return $"`{text}`";
@@ -108,16 +114,18 @@ namespace Discord
         }
 
         /// <summary>
-        ///     Formats a user's username + discriminator.
+        ///     Formats a user's username and optional discriminator.
         /// </summary>
         /// <param name="doBidirectional">To format the string in bidirectional unicode or not</param>
-        /// <param name="user">The user whos username and discriminator to format</param>
-        /// <returns>The username + discriminator</returns>
+        /// <param name="user">The user whose username and discriminator to format</param>
+        /// <returns>The username + optional discriminator.</returns>
         public static string UsernameAndDiscriminator(IUser user, bool doBidirectional)
         {
-            return doBidirectional
-                ? $"\u2066{user.Username}\u2069#{user.Discriminator}"
-                : $"{user.Username}#{user.Discriminator}";
+            if (user.DiscriminatorValue != 0)
+                return doBidirectional
+                    ? $"\u2066{user.Username}\u2069#{user.Discriminator}"
+                    : $"{user.Username}#{user.Discriminator}";
+            return user.Username;
         }
     }
 }

@@ -30,8 +30,8 @@ A new module instance is created before a command execution starts then it will 
 
 Every module class must:
 
-- be public
-- inherit [InteractionModuleBase]
+- Be public
+- Inherit from [InteractionModuleBase]
 
 Optionally you can override the included :
 
@@ -61,7 +61,7 @@ Valid **Interaction Commands** must comply with the following requirements:
 |[Autocomplete Command](#autocomplete-commands)| `Task`/`Task<RuntimeResult>` | -             | -                   | `[AutocompleteCommand]`|
 
 > [!NOTE]
-> a `TypeConverter` that is capable of parsing type in question must be registered to the [InteractionService] instance.
+> A `TypeConverter` that is capable of parsing type in question must be registered to the [InteractionService] instance.
 > You should avoid using long running code in your command module.
 > Depending on your setup, long running code may block the Gateway thread of your bot, interrupting its connection to Discord.
 
@@ -94,20 +94,24 @@ By default, your methods can feature the following parameter types:
 - `sbyte`, `byte`
 - `int16`, `int32`, `int64`
 - `uint16`, `uint32`, `uint64`
-- `enum` (Values are registered as multiple choice options and are enforced by Discord. Use `[HideAttribute]` on enum values to prevent them from getting registered.)
+- `enum`
 - `DateTime`
 - `TimeSpan`
 
+> [!NOTE]
+> Enum values are registered as multiple choice options and are enforced by Discord. Use the `[Hide]` attribute on enum values to prevent them from getting registered.
+
 ---
 
-**You can use more specialized implementations of [IChannel] to restrict the allowed channel types for a channel type option.*
+**You can use more specialized implementations of [IChannel] to restrict the allowed channel types for a channel type option.**
+
 | interface           | Channel Type                  |
 |---------------------|-------------------------------|
 | `IStageChannel`     | Stage Channels                |
 | `IVoiceChannel`     | Voice Channels                |
 | `IDMChannel`        | DM Channels                   |
 | `IGroupChannel`     | Group Channels                |
-| `ICategory Channel` | Category Channels             |
+| `ICategoryChannel` | Category Channels             |
 | `INewsChannel`      | News Channels                 |
 | `IThreadChannel`    | Public, Private, News Threads |
 | `ITextChannel`      | Text Channels                 |
@@ -160,6 +164,8 @@ Interaction service complex parameter constructors are prioritized in the follow
 3. Type's only public constuctor.
 
 #### DM Permissions
+> [!WARNING]
+> [EnabledInDmAttribute] is being deprecated in favor of [CommandContextType] attribute.
 
 You can use the [EnabledInDmAttribute] to configure whether a globally-scoped top level command should be enabled in Dms or not. Only works on top level commands.
 
@@ -200,7 +206,7 @@ And the captured words will be passed on to the command method in the same order
 You may use as many wild card characters as you want.
 
 > [!NOTE]
-> If Interaction Service recieves a component interaction with **player:play,rickroll** custom id,
+> If Interaction Service receives a component interaction with **player:play,rickroll** custom id,
 > `op` will be *play* and `name` will be *rickroll*
 
 ## Select Menus
@@ -233,9 +239,9 @@ A Modal implementation would look like this:
 [!code-csharp[Modal Command](samples/intro/modal.cs)]
 
 > [!NOTE]
-> If you are using Modals in the interaction service it is **highly 
+> If you are using Modals in the interaction service it is **highly
 > recommended** that you enable `PreCompiledLambdas` in your config
-> to prevent performance issues. 
+> to prevent performance issues.
 
 ## Interaction Context
 
@@ -251,7 +257,7 @@ To achieve this, make sure your module classes inherit from the generic variant 
 
 The [InteractionService] ships with 4 different kinds of [InteractionContext]:
 
-1. [InteractionContext]]: A bare-bones execution context consisting of only implementation neutral interfaces
+1. [InteractionContext]: A bare-bones execution context consisting of only implementation neutral interfaces
 2. [SocketInteractionContext]: An execution context for use with [DiscordSocketClient]. Socket entities are exposed in this context without the need of casting them.
 3. [ShardedInteractionContext]: [DiscordShardedClient] variant of the [SocketInteractionContext]
 4. [RestInteractionContext]: An execution context designed to be used with a [DiscordRestClient] and webhook based interactions pattern
@@ -260,9 +266,9 @@ You can create custom Interaction Contexts by implementing the [IInteractionCont
 
 One problem with using the concrete type InteractionContexts is that you cannot access the information that is specific to different interaction types without casting. Concrete type interaction contexts are great for creating shared interaction modules but you can also use the generic variants of the built-in interaction contexts to create interaction specific interaction modules.
 
-> [!INFO]
+> [!NOTE]
 > Message component interactions have access to a special method called `UpdateAsync()` to update the body of the method the interaction originated from.
-> Normally this wouldn't be accessable without casting the `Context.Interaction`.
+> Normally this wouldn't be accessible without casting the `Context.Interaction`.
 
 [!code-csharp[Context Example](samples/intro/context.cs)]
 
@@ -291,7 +297,7 @@ Module groups allow you to create sub-commands and sub-commands groups.
 By nesting commands inside a module that is tagged with [GroupAttribute] you can create prefixed commands.
 
 > [!WARNING]
-> Although creating nested module stuctures are allowed,
+> Although creating nested module structures are allowed,
 > you are not permitted to use more than 2 [GroupAttribute]'s in module hierarchy.
 
 > [!NOTE]
@@ -318,12 +324,12 @@ An example of executing a command from an event can be seen here:
 
 [!code-csharp[Command Event Example](samples/intro/event.cs)]
 
-Commands can be either executed on the gateway thread or on a seperate thread from the thread pool.
+Commands can be either executed on the gateway thread or on a separate thread from the thread pool.
 This behaviour can be configured by changing the `RunMode` property of `InteractionServiceConfig` or by setting the *runMode* parameter of a command attribute.
 
 > [!WARNING]
 > In the example above, no form of post-execution is presented.
-> Please carefully read the [Post Execution Documentation] for the best approach in resolving the result based on your `RunMode`.
+> Please carefully read the [Post-Execution Documentation] for the best approach in resolving the result based on your `RunMode`.
 
 You can also configure the way [InteractionService] executes the commands.
 By default, commands are executed using `ConstructorInfo.Invoke()` to create module instances and
@@ -352,14 +358,9 @@ can be used to register cherry picked modules or commands to global/guild scopes
 > [!NOTE]
 > [DontAutoRegisterAttribute] can be used on module classes to prevent `RegisterCommandsGloballyAsync()` and `RegisterCommandsToGuildAsync()` from registering them to the Discord.
 
-> [!NOTE]
-> In debug environment, since Global commands can take up to 1 hour to register/update,
-> it is adviced to register your commands to a test guild for your changes to take effect immediately.
-> You can use preprocessor directives to create a simple logic for registering commands as seen above.
-
 ## Interaction Utility
 
-Interaction Service ships with a static `InteractionUtiliy`
+Interaction Service ships with a static `InteractionUtility`
 class which contains some helper methods to asynchronously waiting for Discord Interactions.
 For instance, `WaitForInteractionAsync()` method allows you to wait for an Interaction for a given amount of time.
 This method returns the first encountered Interaction that satisfies the provided predicate.
@@ -370,7 +371,7 @@ This method returns the first encountered Interaction that satisfies the provide
 
 ## Webhook Based Interactions
 
-Instead of using the gateway to recieve Discord Interactions, Discord allows you to recieve Interaction events over Webhooks.
+Instead of using the gateway to receive Discord Interactions, Discord allows you to receive Interaction events over Webhooks.
 Interaction Service also supports this Interaction type but to be able to
 respond to the Interactions within your command modules you need to perform the following:
 
@@ -389,7 +390,7 @@ Discord Slash Commands support name/description localization. Localization is av
 
 ### JsonLocalizationManager
 
-`JsonLocaliationManager` uses a nested data structure similar to Discord's Application Commands schema. You can get the Json schema [here](https://gist.github.com/Cenngo/d46a881de24823302f66c3c7e2f7b254). `JsonLocalizationManager` accepts a base path and a base file name and automatically discovers every resource file ( \basePath\fileName.locale.json ). A Json resource file should have a structure similar to:
+`JsonLocalizationManager` uses a nested data structure similar to Discord's Application Commands schema. You can get the Json schema [here](https://gist.github.com/Cenngo/d46a881de24823302f66c3c7e2f7b254). `JsonLocalizationManager` accepts a base path and a base file name and automatically discovers every resource file ( \basePath\fileName.locale.json ). A Json resource file should have a structure similar to:
 
 ```json
 {
@@ -420,8 +421,15 @@ Discord Slash Commands support name/description localization. Localization is av
 }
 ```
 
+## User Apps
+
+User apps are the kind of Discord applications that are installed onto a user instead of a guild, thus making commands usable anywhere on Discord. Note that only users who have installed the application will see the commands. This sample shows you how to create a simple user install command.
+
+[!code-csharp[Registering Commands Example](samples/intro/userapps.cs)]
+
 [AutocompleteHandlers]: xref:Guides.IntFw.AutoCompletion
 [DependencyInjection]: xref:Guides.DI.Intro
+[Post-Execution Documentation]: xref:Guides.IntFw.PostExecution
 
 [GroupAttribute]: xref:Discord.Interactions.GroupAttribute
 [DontAutoRegisterAttribute]: xref:Discord.Interactions.DontAutoRegisterAttribute
@@ -438,18 +446,23 @@ Discord Slash Commands support name/description localization. Localization is av
 [ModalExecuted]: xref:Discord.WebSocket.BaseSocketClient
 [DiscordSocketClient]: xref:Discord.WebSocket.DiscordSocketClient
 [DiscordRestClient]: xref:Discord.Rest.DiscordRestClient
+[DiscordShardedClient]: xref:Discord.WebSocket.DiscordShardedClient
 [SocketInteractionContext]: xref:Discord.Interactions.SocketInteractionContext
 [ShardedInteractionContext]: xref:Discord.Interactions.ShardedInteractionContext
 [InteractionContext]: xref:Discord.Interactions.InteractionContext
-[IInteractionContect]: xref:Discord.Interactions.IInteractionContext
+[IInteractionContext]: xref:Discord.IInteractionContext
 [RestInteractionContext]: xref:Discord.Rest.RestInteractionContext
 [SummaryAttribute]: xref:Discord.Interactions.SummaryAttribute
 [ChoiceAttribute]: xref:Discord.Interactions.ChoiceAttribute
 [ChannelTypesAttribute]: xref:Discord.Interactions.ChannelTypesAttribute
 [MaxValueAttribute]: xref:Discord.Interactions.MaxValueAttribute
 [MinValueAttribute]: xref:Discord.Interactions.MinValueAttribute
+[EnabledInDmAttribute]: xref:Discord.Interactions.EnabledInDmAttribute
+[CommandContextType]: xref:Discord.Interactions.CommandContextTypeAttribute
+[DefaultMemberPermissionsAttribute]: xref:Discord.Interactions.DefaultMemberPermissionsAttribute
 
 [IChannel]: xref:Discord.IChannel
+[IAttachment]: xref:Discord.IAttachment
 [IRole]: xref:Discord.IRole
 [IUser]: xref:Discord.IUser
 [IMessage]: xref:Discord.IMessage
