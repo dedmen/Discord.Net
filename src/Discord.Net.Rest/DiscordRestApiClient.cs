@@ -86,6 +86,7 @@ namespace Discord.API
             {
                 TokenType.Bot => $"Bot {token}",
                 TokenType.Bearer => $"Bearer {token}",
+				TokenType.User => token,
                 _ => throw new ArgumentException(message: "Unknown OAuth token type.", paramName: nameof(tokenType)),
             };
         }
